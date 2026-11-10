@@ -97,8 +97,11 @@
       <section class="view hidden" id="view-receipt">
         <div class="receipt-chrome" id="receipt-mount"></div>
         <div class="receipt-actions">
-          <button type="button" class="outline-btn" id="btn-receipt-close">Close</button>
-          <button type="button" class="gold-btn" id="btn-new-order">New order</button>
+          <button type="button" class="outline-btn" id="btn-show-customer">Show customer</button>
+          <div class="receipt-actions-row">
+            <button type="button" class="outline-btn" id="btn-receipt-close">Close</button>
+            <button type="button" class="gold-btn" id="btn-new-order">New order</button>
+          </div>
         </div>
       </section>
 
@@ -170,6 +173,13 @@
         <button type="button" class="gold-btn" id="btn-close-confirm">Close the day</button>
       </div>
     </div>
+  </div>
+
+  <div id="customer-overlay" class="hidden" role="dialog" aria-modal="true" aria-label="Customer receipt">
+    <div id="customer-stage">
+      <div id="customer-mount"></div>
+    </div>
+    <button type="button" class="gold-btn" id="btn-customer-close">Close</button>
   </div>
 
   <script src="js/money.js"></script>

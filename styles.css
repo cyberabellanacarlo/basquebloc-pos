@@ -286,42 +286,82 @@ img { max-width: 100%; border: 0; }
 }
 .receipt-actions {
   flex: 0 0 auto; width: 100%; max-width: 520px;
-  display: flex; gap: 10px; padding: 12px 16px calc(16px + var(--safe-b));
+  display: flex; flex-direction: column; gap: 10px;
+  padding: 12px 16px calc(16px + var(--safe-b));
   background: var(--bg);
   z-index: 2;
   position: relative;
 }
-body.receipt-open #topbar { display: none; }
+.receipt-actions-row { display: flex; gap: 10px; width: 100%; }
 .receipt-actions .gold-btn, .receipt-actions .outline-btn { flex: 1 1 auto; }
+#btn-show-customer { width: 100%; min-height: 48px; flex: 1 0 auto; }
+#btn-new-order, #btn-receipt-close { min-height: 64px; }
+body.receipt-open #topbar { display: none; }
 
-.slip {
+.slip-shell {
   width: min(420px, 100%);
+  filter: drop-shadow(0 18px 40px rgba(0,0,0,.5));
+  display: flex;
+  flex-direction: column;
+  background: transparent;
+}
+.slip-tear {
+  display: block;
+  width: 100%;
+  height: 14px;
+  flex: 0 0 14px;
+  pointer-events: none;
+}
+.slip-body {
   background: #fffaf2;
   color: #1a1a1a;
-  padding: 28px 22px 32px;
-  box-shadow: 0 18px 50px rgba(0,0,0,.45);
+  padding: 18px 20px 20px;
   font-family: ui-monospace, "Cascadia Mono", "SF Mono", "Menlo", "Consolas", "Liberation Mono", monospace;
-  font-size: 15px; line-height: 1.45;
+  font-size: 20px; line-height: 1.35;
   text-align: center;
   position: relative;
 }
-.slip-logo { width: 92px; height: auto; margin: 0 auto 6px; display: block; filter: grayscale(1) contrast(1.2); }
+.slip-logo { width: 84px; height: auto; margin: 0 auto 6px; display: block; filter: grayscale(1) contrast(1.2); }
 .slip-brand { font-weight: 800; font-size: 22px; letter-spacing: 0.12em; }
-.slip-tagline { font-style: italic; font-size: 13px; margin-top: 4px; }
-.slip-city { font-size: 13px; letter-spacing: 0.16em; margin: 2px 0 14px; }
-.slip-ord-label { font-size: 12px; letter-spacing: 0.18em; margin-top: 8px; }
-.slip-ord-no { font-weight: 800; font-size: clamp(48px, 12vw, 80px); line-height: 1; letter-spacing: -0.03em; margin: 4px 0 6px; color: #111; }
-.slip-cust { font-weight: 700; font-size: 18px; margin-bottom: 8px; }
+.slip-tagline { font-style: italic; font-size: 15px; margin-top: 4px; }
+.slip-city { font-size: 15px; letter-spacing: 0.16em; margin: 2px 0 12px; }
+.slip-ord-label { font-size: 13px; letter-spacing: 0.18em; margin-top: 6px; }
+.slip-ord-no { font-weight: 800; font-size: clamp(48px, 11vw, 76px); line-height: 1; letter-spacing: -0.03em; margin: 4px 0 6px; color: #111; }
+.slip-cust { font-weight: 700; font-size: 20px; margin-bottom: 8px; }
 .slip-rule { border-top: 1px dashed #bfb5a4; margin: 10px 0; }
-.slip-row { display: flex; justify-content: space-between; gap: 12px; text-align: left; }
-.slip-item { flex: 1 1 auto; min-width: 0; overflow-wrap: break-word; word-break: normal; }
-.slip-amt { flex: 0 0 auto; font-variant-numeric: tabular-nums; }
-.slip-total { font-weight: 800; font-size: 22px; color: var(--slip-gold); margin: 2px 0; letter-spacing: 0.04em; }
-.slip-change { font-weight: 800; }
+.slip-row { display: flex; justify-content: space-between; gap: 12px; text-align: left; font-size: 20px; line-height: 1.35; }
+.slip-item { flex: 1 1 auto; min-width: 0; overflow-wrap: break-word; word-break: normal; font-size: 20px; }
+.slip-amt { flex: 0 0 auto; font-variant-numeric: tabular-nums; font-size: 20px; }
+.slip-total, .slip-total span, #receipt-total {
+  font-weight: 800; font-size: 40px; color: var(--slip-gold); margin: 2px 0; letter-spacing: 0.02em; line-height: 1.15;
+}
+.slip-change { font-weight: 800; font-size: 20px; }
 .slip-thanks { font-weight: 800; font-size: 22px; letter-spacing: 0.14em; margin: 16px 0 8px; }
-.slip-note, .slip-care, .slip-official { font-size: 13px; line-height: 1.4; }
+.slip-note, .slip-care { font-size: 15px; line-height: 1.4; }
 .slip-care { margin-top: 12px; }
-.slip-official { margin-top: 8px; color: #555; }
+.slip-official { margin-top: 8px; color: #1a1a1a; font-weight: 800; font-size: 15px; }
+
+/* Full-screen customer receipt (Fullscreen API or fixed overlay fallback). */
+#customer-overlay {
+  position: fixed; inset: 0; z-index: 80;
+  background: #071317;
+  display: flex; flex-direction: column;
+  padding: var(--safe-t) var(--safe-r) var(--safe-b) var(--safe-l);
+}
+#customer-overlay.hidden { display: none !important; }
+#customer-stage {
+  flex: 1 1 0; min-height: 0; width: 100%;
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden; padding: 12px 16px;
+  cursor: pointer;
+}
+#customer-mount { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
+#customer-mount .slip-shell { width: min(520px, 100%); }
+#btn-customer-close {
+  flex: 0 0 auto; align-self: center;
+  min-height: 64px; min-width: 200px;
+  margin: 8px 16px calc(12px + var(--safe-b));
+}
 
 /* ---------- Order list ---------- */
 #orders-tabs, #history-toolbar, #settings-tabs { display: flex; gap: 8px; padding: 10px 12px; flex: 0 0 auto; flex-wrap: wrap; align-items: center; }

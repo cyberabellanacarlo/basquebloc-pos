@@ -1,5 +1,5 @@
 /* Versioned cache. Sales and the menu live in IndexedDB and are never stored or cleared here. */
-var CACHE = "bbpos-web-v1";
+var CACHE = "bbpos-web-v2";
 var SHELL = [
   "./",
   "./index.html",
@@ -14,6 +14,8 @@ var SHELL = [
   "./assets/logo_gold.png",
   "./assets/logo_white.png",
   "./assets/receipt_logo.png",
+  "./assets/slip-tear-top.svg",
+  "./assets/slip-tear-bottom.svg",
   "./assets/fonts/inter_regular.ttf",
   "./assets/fonts/inter_semibold.ttf",
   "./assets/fonts/inter_bold.ttf",

@@ -1,0 +1,12 @@
+{
+  "itemFontPx": 20,
+  "amtFontPx": 20,
+  "totalFontPx": 40,
+  "totalColor": "rgb(138, 100, 32)",
+  "officialWeight": "800",
+  "officialText": "This is not an official receipt.",
+  "newOrderHeightPx": 64,
+  "brand": "BASQUE BLOC",
+  "facebook": "",
+  "hasFacebookPH": true
+}

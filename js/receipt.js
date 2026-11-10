@@ -43,7 +43,9 @@
     var leftMeta = cashier ? ("Cashier: " + cashier) : ("Paid: " + paid);
 
     mount.innerHTML =
-      '<article class="slip" id="receipt-slip">' +
+      '<div class="slip-shell" id="receipt-slip">' +
+        '<img class="slip-tear slip-tear-top" src="assets/slip-tear-top.svg" alt="">' +
+        '<article class="slip-body">' +
         '<img class="slip-logo" src="assets/receipt_logo.png" alt="The Basque Bloc">' +
         '<div class="slip-brand">BASQUE BLOC</div>' +
         '<div class="slip-tagline">' + esc(TAGLINE) + '</div>' +
@@ -66,7 +68,9 @@
         (care ? '<div class="slip-care">' + esc(care) + '</div>' : '') +
         (facebook ? '<div class="slip-care">' + esc(facebook) + '</div>' : '') +
         (notOfficial ? '<div class="slip-official">This is not an official receipt.</div>' : '') +
-      '</article>';
+        '</article>' +
+        '<img class="slip-tear slip-tear-bottom" src="assets/slip-tear-bottom.svg" alt="">' +
+      '</div>';
   }
 
   function esc(s) {

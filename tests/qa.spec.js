@@ -59,16 +59,31 @@ test("full cash checkout, receipt, history, reload, offline", async ({ page, con
   await expect(page.locator(".slip-cust")).toHaveText("Anna");
   await expect(page.locator("#receipt-total")).toHaveText("₱550.00");
   await expect(page.locator(".slip-change")).toContainText("₱450.00");
-  await expect(page.locator(".slip")).toContainText("2 x Classic Slice");
-  await expect(page.locator(".slip")).toContainText("1 x Ube Slice");
-  await expect(page.locator(".slip")).toContainText("1 x Iced Latte");
-  await expect(page.locator(".slip")).toContainText("SALAMAT!");
-  await expect(page.locator(".slip")).toContainText("TAGUM CITY");
-  await expect(page.locator(".slip")).toContainText("Mindanao's Best Tasting Cheesecake!");
-  await expect(page.locator(".slip")).toContainText("This is not an official receipt.");
+  await expect(page.locator(".slip-body")).toContainText("2 x Classic Slice");
+  await expect(page.locator(".slip-body")).toContainText("1 x Ube Slice");
+  await expect(page.locator(".slip-body")).toContainText("1 x Iced Latte");
+  await expect(page.locator(".slip-body")).toContainText("SALAMAT!");
+  await expect(page.locator(".slip-body")).toContainText("TAGUM CITY");
+  await expect(page.locator(".slip-body")).toContainText("Mindanao's Best Tasting Cheesecake!");
+  await expect(page.locator(".slip-body")).toContainText("This is not an official receipt.");
+  await expect(page.locator(".slip-brand")).toHaveText("BASQUE BLOC");
+  await expect(page.locator(".slip-body")).toContainText("facebook.com/BasqueBlocPH");
+  await expect(page.locator("#btn-show-customer")).toBeVisible();
 
-  const totalColor = await page.locator("#receipt-total").evaluate((el) => getComputedStyle(el).color);
-  expect(totalColor).toBe("rgb(138, 100, 32)"); /* #8A6420 */
+  const measured = await page.evaluate(() => window.__bbposQA.measureReceipt());
+  expect(measured.itemFontPx, "item line font").toBeGreaterThanOrEqual(20);
+  expect(measured.amtFontPx, "qty/price font").toBeGreaterThanOrEqual(20);
+  expect(measured.totalFontPx, "TOTAL font").toBeGreaterThanOrEqual(40);
+  expect(measured.totalColor).toBe("rgb(138, 100, 32)"); /* #8A6420 */
+  expect(measured.newOrderHeightPx, "New order height").toBeGreaterThanOrEqual(64);
+  expect(Number(measured.officialWeight), "official line bold").toBeGreaterThanOrEqual(700);
+  expect(measured.officialText).toBe("This is not an official receipt.");
+  expect(measured.hasFacebookPH).toBeTruthy();
+  require("fs").mkdirSync(require("path").join(__dirname, "..", "shots", "receipt_v2"), { recursive: true });
+  require("fs").writeFileSync(
+    require("path").join(__dirname, "..", "shots", "receipt_v2", "measured.json"),
+    JSON.stringify(measured, null, 2)
+  );
 
   /* History — the top bar is hidden on the receipt so the slip can be photographed. */
   await page.evaluate(() => window.__bbposQA.go("history"));
@@ -185,5 +200,75 @@ test("screenshots at phone, Android tablet, and 13-inch iPad sizes", async ({ pa
         fullPage: false
       });
     }
+  }
+});
+
+test("receipt typography, torn edges, and Show customer at every size", async ({ page }) => {
+  const recDir = path.join(SHOTS, "receipt_v2");
+  fs.mkdirSync(recDir, { recursive: true });
+
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.goto("/?qa=1");
+  await ready(page);
+  await seedPrices(page);
+
+  const hasSale = await page.evaluate(() => window.__bbposQA.todaySales().length > 0);
+  if (!hasSale) {
+    await page.evaluate(async () => {
+      window.__bbposQA.addByName("Classic Slice");
+      window.__bbposQA.addByName("Classic Slice");
+      window.__bbposQA.addByName("Ube Slice");
+      window.__bbposQA.addByName("Iced Latte");
+      window.__bbposQA.setName("Anna");
+      window.__bbposQA.openPay();
+      window.__bbposQA.setTender("1000");
+      await window.__bbposQA.confirmPay();
+    });
+  } else {
+    await page.evaluate(() => window.__bbposQA.openReceipt(window.__bbposQA.todaySales()[0], false));
+  }
+  await expect(page.locator("#view-receipt")).toBeVisible();
+  await page.waitForTimeout(80);
+
+  const measured = await page.evaluate(() => window.__bbposQA.measureReceipt());
+  expect(measured.itemFontPx).toBeGreaterThanOrEqual(20);
+  expect(measured.amtFontPx).toBeGreaterThanOrEqual(20);
+  expect(measured.totalFontPx).toBeGreaterThanOrEqual(40);
+  expect(measured.totalColor).toBe("rgb(138, 100, 32)");
+  expect(measured.newOrderHeightPx).toBeGreaterThanOrEqual(64);
+  expect(Number(measured.officialWeight)).toBeGreaterThanOrEqual(700);
+  fs.writeFileSync(path.join(recDir, "measured.json"), JSON.stringify(measured, null, 2));
+
+  /* Overlay fallback must work even when Fullscreen API is missing (iPad Safari). */
+  await page.evaluate(() => {
+    const el = document.getElementById("customer-overlay");
+    el.requestFullscreen = undefined;
+    el.webkitRequestFullscreen = undefined;
+  });
+
+  for (const vp of VIEWPORTS) {
+    await page.setViewportSize({ width: vp.width, height: vp.height });
+    await page.evaluate(() => window.__bbposQA.closeCustomer());
+    await page.evaluate(() => window.__bbposQA.openReceipt(window.__bbposQA.todaySales()[0], false));
+    await page.waitForTimeout(120);
+    await page.screenshot({ path: path.join(recDir, vp.id + "_staff.png"), fullPage: false });
+
+    await page.locator("#btn-show-customer").click();
+    await expect(page.locator("#customer-overlay")).toBeVisible();
+    await expect(page.locator("#customer-mount .slip-shell")).toBeVisible();
+    await expect(page.locator("#customer-mount")).toContainText("BASQUE BLOC");
+    await expect(page.locator("#customer-mount")).toContainText("facebook.com/BasqueBlocPH");
+    await page.waitForTimeout(120);
+    await page.screenshot({ path: path.join(recDir, vp.id + "_customer.png"), fullPage: false });
+
+    /* Close button exits. */
+    await page.locator("#btn-customer-close").click();
+    await expect(page.locator("#customer-overlay")).toBeHidden();
+
+    /* Re-open and a tap on the stage also exits. */
+    await page.locator("#btn-show-customer").click();
+    await expect(page.locator("#customer-overlay")).toBeVisible();
+    await page.locator("#customer-stage").click({ position: { x: 8, y: 8 } });
+    await expect(page.locator("#customer-overlay")).toBeHidden();
   }
 });

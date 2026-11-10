@@ -16,6 +16,7 @@
   };
   var FAVORITES = { "Classic Slice": 1, "Ube Slice": 1, "Strawberry Cup": 1, "Iced Latte": 1 };
   var DEFAULT_CARE = "Best enjoyed within 3 days, kept chilled.";
+  var DEFAULT_FACEBOOK = "Basque Bloc Cheesecakes · facebook.com/BasqueBlocPH";
 
   function openDb() {
     return new Promise(function (resolve, reject) {
@@ -72,7 +73,7 @@
       pin: DEFAULT_PIN,
       cashier: "",
       careNote: DEFAULT_CARE,
-      facebook: "",
+      facebook: DEFAULT_FACEBOOK,
       notOfficial: true,
       receiptSeq: 0,
       persistOk: false
@@ -122,7 +123,18 @@
   function getSettings() {
     return tx(["kv"], "readonly", function (t) {
       return req(t.objectStore("kv").get("settings"));
-    }).then(function (s) { return s || defaultSettings(); });
+    }).then(function (s) {
+      s = s || defaultSettings();
+      /* Existing devices may still have a blank Facebook line — fill the default once. */
+      if (!String(s.facebook || "").trim()) {
+        s.facebook = DEFAULT_FACEBOOK;
+        return tx(["kv"], "readwrite", function (t) {
+          t.objectStore("kv").put(Object.assign({}, s, { key: "settings" }));
+          return s;
+        });
+      }
+      return s;
+    });
   }
 
   function setSettings(partial) {
@@ -243,6 +255,7 @@
   global.BBStorage = {
     DEFAULT_PIN: DEFAULT_PIN,
     DEFAULT_CARE: DEFAULT_CARE,
+    DEFAULT_FACEBOOK: DEFAULT_FACEBOOK,
     nid: nid,
     init: init,
     getSettings: getSettings,

@@ -18,6 +18,7 @@
     tenderText: "",
     currentSale: null,
     receiptFromHistory: false,
+    customerOpen: false,
     ordersTab: "live",
     settingsTab: "menu",
     settingsUnlocked: false,
@@ -76,26 +77,83 @@
     if (name === "settings") renderSettings();
     if (name === "pay") renderPay();
     document.body.classList.toggle("receipt-open", name === "receipt");
+    if (name !== "receipt") closeCustomerView();
     if (name === "receipt") setTimeout(fitSlip, 30);
   }
 
-  function fitSlip() {
-    var chrome = $("receipt-mount");
-    var slip = $("receipt-slip");
-    if (!chrome || !slip || state.view !== "receipt") return;
-    slip.style.transform = "none";
-    slip.style.marginBottom = "0";
-    var availW = chrome.clientWidth - 24;
-    var availH = chrome.clientHeight - 16;
+  function fitSlipIn(chrome, opts) {
+    opts = opts || {};
+    if (!chrome) return;
+    var shell = chrome.querySelector(".slip-shell");
+    if (!shell) return;
+    shell.style.transform = "none";
+    shell.style.marginBottom = "0";
+    shell.style.marginTop = "0";
+    var pad = opts.pad != null ? opts.pad : 16;
+    var availW = chrome.clientWidth - pad;
+    var availH = chrome.clientHeight - pad;
     if (availW <= 40 || availH <= 40) return;
-    var w = slip.offsetWidth;
-    var h = slip.offsetHeight;
+    var w = shell.offsetWidth;
+    var h = shell.offsetHeight;
     if (!w || !h) return;
+    /* Never clip: scale down as far as needed so the full slip stays in view. */
     var scale = Math.min(1, availW / w, availH / h);
-    if (scale < 0.45) scale = 0.45;
-    slip.style.transformOrigin = "top center";
-    slip.style.transform = "scale(" + scale + ")";
-    slip.style.marginBottom = Math.round(h * (scale - 1)) + "px";
+    var origin = opts.origin || "top center";
+    shell.style.transformOrigin = origin;
+    shell.style.transform = "scale(" + scale + ")";
+    if (origin.indexOf("top") !== -1) {
+      shell.style.marginBottom = Math.round(h * (scale - 1)) + "px";
+    }
+  }
+
+  function fitSlip() {
+    if (state.customerOpen) {
+      fitSlipIn($("customer-stage"), { origin: "center center", pad: 8 });
+      return;
+    }
+    if (state.view !== "receipt") return;
+    fitSlipIn($("receipt-mount"), { origin: "top center", pad: 16 });
+  }
+
+  function tryFullscreen(el) {
+    if (!el) return Promise.resolve(false);
+    var fn = el.requestFullscreen || el.webkitRequestFullscreen;
+    if (!fn) return Promise.resolve(false);
+    try {
+      var ret = fn.call(el);
+      if (ret && ret.then) {
+        return ret.then(function () { return true; }).catch(function () { return false; });
+      }
+      return Promise.resolve(true);
+    } catch (e) {
+      return Promise.resolve(false);
+    }
+  }
+
+  function openCustomerView() {
+    if (!state.currentSale) return;
+    state.customerOpen = true;
+    receipt.render(state.currentSale, state.settings, $("customer-mount"));
+    $("customer-overlay").classList.remove("hidden");
+    setTimeout(function () {
+      fitSlipIn($("customer-stage"), { origin: "center center", pad: 8 });
+    }, 30);
+    tryFullscreen($("customer-overlay"));
+  }
+
+  function closeCustomerView() {
+    if (!state.customerOpen) return;
+    state.customerOpen = false;
+    $("customer-overlay").classList.add("hidden");
+    $("customer-mount").innerHTML = "";
+    var fs = document.fullscreenElement || document.webkitFullscreenElement;
+    if (fs) {
+      var exit = document.exitFullscreen || document.webkitExitFullscreen;
+      if (exit) {
+        try { exit.call(document); } catch (e) {}
+      }
+    }
+    if (state.view === "receipt") setTimeout(fitSlip, 30);
   }
 
   function goCounter() { showView("counter"); }
@@ -370,6 +428,7 @@
   }
 
   function newOrder() {
+    closeCustomerView();
     clearCart();
     state.currentSale = null;
     goCounter();
@@ -713,14 +772,14 @@
         '<button type="button" class="gold-btn" id="btn-save-receipt">Save receipt text</button>';
       $("set-cashier").value = s.cashier || "";
       $("set-care").value = s.careNote == null ? storage.DEFAULT_CARE : s.careNote;
-      $("set-fb").value = s.facebook || "";
+      $("set-fb").value = s.facebook || storage.DEFAULT_FACEBOOK;
       setSwitch($("set-official"), s.notOfficial !== false);
       $("set-official").addEventListener("click", function () { setSwitch($("set-official"), !$("set-official").classList.contains("on")); });
       $("btn-save-receipt").addEventListener("click", function () {
         storage.setSettings({
           cashier: $("set-cashier").value.trim(),
           careNote: $("set-care").value.trim(),
-          facebook: $("set-fb").value.trim(),
+          facebook: $("set-fb").value.trim() || storage.DEFAULT_FACEBOOK,
           notOfficial: $("set-official").classList.contains("on")
         }).then(function (next) {
           state.settings = next;
@@ -885,8 +944,24 @@
     $("btn-confirm-pay").addEventListener("click", confirmPay);
     $("btn-new-order").addEventListener("click", newOrder);
     $("btn-receipt-close").addEventListener("click", function () {
+      closeCustomerView();
       if (state.receiptFromHistory) showView("history");
       else showView("orders");
+    });
+    $("btn-show-customer").addEventListener("click", openCustomerView);
+    $("btn-customer-close").addEventListener("click", function (e) {
+      e.stopPropagation();
+      closeCustomerView();
+    });
+    $("customer-stage").addEventListener("click", function () { closeCustomerView(); });
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape" && state.customerOpen) closeCustomerView();
+    });
+    document.addEventListener("fullscreenchange", function () {
+      if (!document.fullscreenElement && state.customerOpen) closeCustomerView();
+    });
+    document.addEventListener("webkitfullscreenchange", function () {
+      if (!document.webkitFullscreenElement && state.customerOpen) closeCustomerView();
     });
 
     document.querySelectorAll("#orders-tabs .chip").forEach(function (b) {
@@ -961,7 +1036,36 @@
     summarizeToday: function () { return receipt.summarize(todayKey(), state.sales); },
     closeDay: confirmCloseDay,
     money: money,
-    reload: function () { return Promise.all([reloadMenu(), reloadSales()]); }
+    reload: function () { return Promise.all([reloadMenu(), reloadSales()]); },
+    openReceipt: function (sale, fromHistory) { openReceipt(sale || this.lastSale(), !!fromHistory); },
+    showCustomer: openCustomerView,
+    closeCustomer: closeCustomerView,
+    measureReceipt: function () {
+      var root = document.getElementById("receipt-mount") || document;
+      var item = root.querySelector(".slip-item");
+      var amt = root.querySelector(".slip-amt");
+      var total = document.getElementById("receipt-total");
+      var official = root.querySelector(".slip-official");
+      var btn = document.getElementById("btn-new-order");
+      function px(el, prop) {
+        if (!el) return 0;
+        return parseFloat(getComputedStyle(el)[prop] || "0");
+      }
+      return {
+        itemFontPx: px(item, "fontSize"),
+        amtFontPx: px(amt, "fontSize"),
+        totalFontPx: px(total, "fontSize"),
+        totalColor: total ? getComputedStyle(total).color : "",
+        officialWeight: official ? String(getComputedStyle(official).fontWeight) : "",
+        officialText: official ? official.textContent : "",
+        newOrderHeightPx: btn ? btn.getBoundingClientRect().height : 0,
+        brand: (root.querySelector(".slip-brand") || {}).textContent || "",
+        facebook: (root.querySelector(".slip-care:last-of-type") && official)
+          ? Array.prototype.map.call(root.querySelectorAll(".slip-care"), function (n) { return n.textContent; }).join(" | ")
+          : "",
+        hasFacebookPH: !!(root.textContent && root.textContent.indexOf("facebook.com/BasqueBlocPH") !== -1)
+      };
+    }
   };
 
   function boot() {
