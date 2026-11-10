@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#071317">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Basque Bloc">
+  <meta name="description" content="Offline point of sale for The Basque Bloc, Tagum. Receipts stay on screen so customers can take a photo.">
+  <title>Basque Bloc POS</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/png" sizes="192x192" href="assets/icons/icon-192.png">
+  <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="app">
+    <header id="topbar">
+      <div class="brand">
+        <img src="assets/b_gold.png" width="40" height="40" alt="">
+        <div class="brand-name">The Basque Bloc</div>
+      </div>
+      <div id="header-clock" aria-live="polite">
+        <div class="tick" aria-hidden="true"></div>
+        <div>
+          <div id="clock-time">--:--</div>
+          <div id="clock-date"></div>
+        </div>
+      </div>
+      <nav id="nav" aria-label="Main">
+        <button type="button" class="nav-btn on" id="nav-counter" data-view="counter">Counter</button>
+        <button type="button" class="nav-btn" id="nav-orders" data-view="orders">Order List <span class="badge zero" id="orders-badge"></span></button>
+        <button type="button" class="nav-btn" id="nav-history" data-view="history">History</button>
+        <button type="button" class="icon-btn" id="nav-settings" data-view="settings" aria-label="Settings">⚙</button>
+      </nav>
+    </header>
+
+    <div id="stage">
+      <!-- COUNTER -->
+      <section class="view" id="view-counter">
+        <div id="menu-pane">
+          <div id="cat-row" role="tablist" aria-label="Menu categories"></div>
+          <div id="menu-grid"></div>
+        </div>
+        <aside id="cart-pane">
+          <div id="cart-head">
+            <div class="lbl">This order</div>
+            <button type="button" class="linkish" id="btn-clear-cart">Clear</button>
+          </div>
+          <div id="cart-lines"><p class="cart-empty">Tap a menu item to start an order.</p></div>
+          <div id="cart-foot">
+            <label class="visually-hidden" for="customer-name">Customer name, optional</label>
+            <input id="customer-name" type="text" maxlength="40" autocomplete="off" autocapitalize="words" placeholder="Customer name (optional)">
+            <div class="total-row">
+              <span class="lbl">Total</span>
+              <span class="amt" id="cart-total">₱0</span>
+            </div>
+            <button type="button" class="gold-btn" id="btn-pay" disabled>Pay</button>
+          </div>
+        </aside>
+      </section>
+
+      <!-- PAY -->
+      <section class="view hidden" id="view-pay">
+        <div class="pay-wrap">
+          <div class="pay-card">
+            <button type="button" class="outline-btn" id="btn-pay-back">Back to cart</button>
+            <div class="lbl">Amount due</div>
+            <div class="pay-total" id="pay-total">₱0</div>
+            <div class="lbl">Payment</div>
+            <div id="pay-methods">
+              <button type="button" class="pay-method on" data-method="CASH">₱ Cash</button>
+              <button type="button" class="pay-method" data-method="GCash">GCash</button>
+              <button type="button" class="pay-method" data-method="Maya">Maya</button>
+            </div>
+            <div id="cash-pad">
+              <div class="received-row">
+                <span class="lbl">Cash received</span>
+                <span id="tender-display">Exact</span>
+              </div>
+              <div class="change-row">
+                <span class="lbl">Change</span>
+                <span id="change-display">₱0</span>
+              </div>
+              <div class="lbl">Quick cash</div>
+              <div id="quick-cash"></div>
+              <div id="keypad"></div>
+            </div>
+            <p class="msg" id="pay-hint"></p>
+            <button type="button" class="gold-btn" id="btn-confirm-pay">Show receipt</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- RECEIPT -->
+      <section class="view hidden" id="view-receipt">
+        <div class="receipt-chrome" id="receipt-mount"></div>
+        <div class="receipt-actions">
+          <button type="button" class="outline-btn" id="btn-receipt-close">Close</button>
+          <button type="button" class="gold-btn" id="btn-new-order">New order</button>
+        </div>
+      </section>
+
+      <!-- ORDER LIST -->
+      <section class="view hidden" id="view-orders">
+        <div id="orders-tabs">
+          <button type="button" class="chip on" data-otab="live">Live</button>
+          <button type="button" class="chip" data-otab="done" id="btn-done-tab">Done today</button>
+        </div>
+        <div id="orders-list"></div>
+      </section>
+
+      <!-- HISTORY -->
+      <section class="view hidden" id="view-history">
+        <div id="history-toolbar">
+          <button type="button" class="outline-btn" id="btn-export-csv">Export CSV</button>
+          <button type="button" class="gold-btn" id="btn-close-day">End of day</button>
+        </div>
+        <div id="history-summary"></div>
+        <div id="history-list"></div>
+      </section>
+
+      <!-- SETTINGS (PIN gate first) -->
+      <section class="view hidden" id="view-settings">
+        <div id="settings-tabs">
+          <button type="button" class="chip on" data-stab="menu">Menu &amp; prices</button>
+          <button type="button" class="chip" data-stab="receipt">Receipt</button>
+          <button type="button" class="chip" data-stab="pin">PIN</button>
+        </div>
+        <div id="settings-body"></div>
+      </section>
+    </div>
+  </div>
+
+  <div class="modal hidden" id="pin-modal" role="dialog" aria-modal="true" aria-labelledby="pin-title">
+    <div class="sheet">
+      <h2 id="pin-title">Enter PIN</h2>
+      <p class="msg">Host menu for prices and settings. Default is 1234 until you change it.</p>
+      <div id="pin-dots"></div>
+      <p id="pin-msg"></p>
+      <div id="pin-pad"></div>
+      <button type="button" class="outline-btn muted" id="btn-pin-cancel" style="width:100%;margin-top:12px">Cancel</button>
+    </div>
+  </div>
+
+  <div class="modal hidden" id="edit-modal" role="dialog" aria-modal="true" aria-labelledby="edit-title">
+    <div class="sheet">
+      <h2 id="edit-title">Edit item</h2>
+      <div class="field"><label for="edit-name">Name</label><input id="edit-name" type="text" maxlength="40"></div>
+      <div class="field"><label for="edit-price">Price (PHP)</label><input id="edit-price" type="text" inputmode="decimal" placeholder="0.00"></div>
+      <div class="toggle"><span>Favorite</span><button type="button" role="switch" id="edit-fav" aria-checked="false"><span></span></button></div>
+      <div class="toggle"><span>Sold out today</span><button type="button" role="switch" id="edit-sold" aria-checked="false"><span></span></button></div>
+      <p class="msg" id="edit-msg"></p>
+      <div class="row-actions">
+        <button type="button" class="outline-btn muted" id="btn-edit-cancel">Cancel</button>
+        <button type="button" class="danger-btn outline-btn" id="btn-edit-delete">Delete</button>
+        <button type="button" class="gold-btn" id="btn-edit-save">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal hidden" id="close-modal" role="dialog" aria-modal="true" aria-labelledby="close-title">
+    <div class="sheet">
+      <h2 id="close-title">End of day</h2>
+      <div id="close-summary"></div>
+      <p class="msg">Open orders still being prepared will be marked closed. Sales stay in History. Order numbers start again at 01 tomorrow.</p>
+      <div class="row-actions">
+        <button type="button" class="outline-btn muted" id="btn-close-cancel">Back</button>
+        <button type="button" class="gold-btn" id="btn-close-confirm">Close the day</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/money.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/cash.js"></script>
+  <script src="js/receipt.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

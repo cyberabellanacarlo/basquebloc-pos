@@ -1,0 +1,992 @@
+(function () {
+  "use strict";
+
+  var storage = window.BBStorage;
+  var money = window.BBMoney;
+  var cash = window.BBCash;
+  var receipt = window.BBReceipt;
+
+  var LATE_MS = 8 * 60 * 1000;
+  var FRESH_MS = 10 * 1000;
+
+  var state = {
+    view: "counter",
+    category: "fav",
+    cart: [],
+    customerName: "",
+    payMethod: "CASH",
+    tenderText: "",
+    currentSale: null,
+    receiptFromHistory: false,
+    ordersTab: "live",
+    settingsTab: "menu",
+    settingsUnlocked: false,
+    pinBuffer: "",
+    pinReason: "settings",
+    menu: { categories: [], items: [] },
+    sales: [],
+    settings: null,
+    persistOk: false,
+    editingItem: null,
+    clockTimer: null,
+    lateTimer: null
+  };
+
+  function $(id) { return document.getElementById(id); }
+  function qaMode() { return location.search.indexOf("qa=1") !== -1; }
+
+  function setAppHeight() {
+    var vv = window.visualViewport;
+    var h = (vv && vv.height) ? vv.height : window.innerHeight;
+    document.documentElement.style.setProperty("--app-h", h + "px");
+  }
+
+  function todayKey() { return money.dayKey(Date.now()); }
+
+  function cartTotal() {
+    return state.cart.reduce(function (n, ln) { return n + ln.qty * ln.unitCentavos; }, 0);
+  }
+
+  function todaySales() {
+    var day = todayKey();
+    return state.sales.filter(function (s) { return s.dayKey === day && s.status !== "CANCELED"; });
+  }
+
+  function waitingCount() {
+    var day = todayKey();
+    return state.sales.filter(function (s) {
+      return s.dayKey === day && s.status !== "PICKED_UP" && s.status !== "CLOSED" && s.status !== "CANCELED";
+    }).length;
+  }
+
+  function isSoldOut(item) {
+    return item.soldOutDay && item.soldOutDay === todayKey();
+  }
+
+  function showView(name) {
+    state.view = name;
+    ["counter", "pay", "receipt", "orders", "history", "settings"].forEach(function (v) {
+      $("view-" + v).classList.toggle("hidden", v !== name);
+    });
+    document.querySelectorAll("#nav .nav-btn, #nav .icon-btn").forEach(function (b) {
+      b.classList.toggle("on", b.getAttribute("data-view") === name);
+    });
+    if (name === "orders") renderOrders();
+    if (name === "history") renderHistory();
+    if (name === "settings") renderSettings();
+    if (name === "pay") renderPay();
+    document.body.classList.toggle("receipt-open", name === "receipt");
+    if (name === "receipt") setTimeout(fitSlip, 30);
+  }
+
+  function fitSlip() {
+    var chrome = $("receipt-mount");
+    var slip = $("receipt-slip");
+    if (!chrome || !slip || state.view !== "receipt") return;
+    slip.style.transform = "none";
+    slip.style.marginBottom = "0";
+    var availW = chrome.clientWidth - 24;
+    var availH = chrome.clientHeight - 16;
+    if (availW <= 40 || availH <= 40) return;
+    var w = slip.offsetWidth;
+    var h = slip.offsetHeight;
+    if (!w || !h) return;
+    var scale = Math.min(1, availW / w, availH / h);
+    if (scale < 0.45) scale = 0.45;
+    slip.style.transformOrigin = "top center";
+    slip.style.transform = "scale(" + scale + ")";
+    slip.style.marginBottom = Math.round(h * (scale - 1)) + "px";
+  }
+
+  function goCounter() { showView("counter"); }
+
+  /* ---------- clock ---------- */
+  function tickClock() {
+    var now = Date.now();
+    $("clock-time").textContent = money.formatClock(now);
+    $("clock-date").textContent = money.formatHeaderDate(now);
+    var badge = $("orders-badge");
+    var n = waitingCount();
+    badge.textContent = n ? String(n) : "";
+    badge.classList.toggle("zero", !n);
+    if (state.view === "orders") renderOrders();
+  }
+
+  /* ---------- menu / cart ---------- */
+  function itemsInCategory(cat) {
+    var items = state.menu.items;
+    if (cat === "fav") return items.filter(function (i) { return i.favorite; });
+    return items.filter(function (i) { return i.categoryId === cat; });
+  }
+
+  function renderCategories() {
+    var row = $("cat-row");
+    row.innerHTML = "";
+    var cats = [{ id: "fav", name: "★ Fav" }].concat(state.menu.categories);
+    if (state.category !== "fav" && !state.menu.categories.some(function (c) { return c.id === state.category; })) {
+      state.category = "fav";
+    }
+    cats.forEach(function (c) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "chip" + (state.category === c.id ? " on" : "");
+      b.textContent = c.name;
+      b.addEventListener("click", function () { state.category = c.id; renderCategories(); renderMenu(); });
+      row.appendChild(b);
+    });
+  }
+
+  function renderMenu() {
+    var grid = $("menu-grid");
+    grid.innerHTML = "";
+    var items = itemsInCategory(state.category);
+    if (!items.length) {
+      var p = document.createElement("p");
+      p.className = "empty";
+      p.style.gridColumn = "1 / -1";
+      p.textContent = state.category === "fav" ? "No favorites yet. Mark items as favorites in Settings." : "No items in this category yet.";
+      grid.appendChild(p);
+      return;
+    }
+    items.forEach(function (item) {
+      var sold = isSoldOut(item);
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "item-card" + (sold ? " sold" : "");
+      b.disabled = sold;
+      b.setAttribute("data-item-id", item.id);
+      var tag = sold ? "Sold out" : (item.isExample ? "Sample" : "");
+      b.innerHTML = '<div class="item-name"></div><div class="item-meta">' +
+        (tag ? '<span class="tag"></span>' : "<span></span>") +
+        '<span class="item-price"></span></div>';
+      b.querySelector(".item-name").textContent = item.name;
+      if (tag) b.querySelector(".tag").textContent = tag;
+      b.querySelector(".item-price").textContent = money.peso(item.priceCentavos);
+      if (!sold) b.addEventListener("click", function () { addToCart(item); });
+      grid.appendChild(b);
+    });
+  }
+
+  function addToCart(item) {
+    var found = state.cart.filter(function (ln) { return ln.itemId === item.id; })[0];
+    if (found) found.qty += 1;
+    else state.cart.push({ itemId: item.id, name: item.name, qty: 1, unitCentavos: item.priceCentavos, isExample: !!item.isExample });
+    renderCart();
+  }
+
+  function setQty(itemId, qty) {
+    if (qty <= 0) {
+      state.cart = state.cart.filter(function (ln) { return ln.itemId !== itemId; });
+    } else {
+      state.cart.forEach(function (ln) { if (ln.itemId === itemId) ln.qty = qty; });
+    }
+    renderCart();
+  }
+
+  function clearCart() {
+    state.cart = [];
+    state.customerName = "";
+    $("customer-name").value = "";
+    renderCart();
+  }
+
+  function renderCart() {
+    var box = $("cart-lines");
+    box.innerHTML = "";
+    if (!state.cart.length) {
+      box.innerHTML = '<p class="cart-empty">Tap a menu item to start an order.</p>';
+    } else {
+      state.cart.forEach(function (ln) {
+        var row = document.createElement("div");
+        row.className = "cart-line";
+        row.innerHTML =
+          '<div class="cart-line-name"></div>' +
+          '<div class="cart-line-amt"></div>' +
+          '<div class="cart-line-ops">' +
+            '<button type="button" class="qty-btn" data-act="dec" aria-label="Fewer">−</button>' +
+            '<span class="qty"></span>' +
+            '<button type="button" class="qty-btn filled" data-act="inc" aria-label="More">+</button>' +
+            '<button type="button" class="linkish" data-act="rm">Remove</button>' +
+          '</div>';
+        row.querySelector(".cart-line-name").textContent = ln.name;
+        row.querySelector(".cart-line-amt").textContent = money.peso(ln.qty * ln.unitCentavos);
+        row.querySelector(".qty").textContent = String(ln.qty);
+        row.querySelector('[data-act="dec"]').addEventListener("click", function () { setQty(ln.itemId, ln.qty - 1); });
+        row.querySelector('[data-act="inc"]').addEventListener("click", function () { setQty(ln.itemId, ln.qty + 1); });
+        row.querySelector('[data-act="rm"]').addEventListener("click", function () { setQty(ln.itemId, 0); });
+        box.appendChild(row);
+      });
+    }
+    $("cart-total").textContent = money.peso(cartTotal());
+    $("btn-pay").disabled = state.cart.length === 0;
+  }
+
+  /* ---------- pay ---------- */
+  function tenderedCentavos() {
+    if (!state.tenderText) return cartTotal(); /* empty = exact */
+    var v = money.parse(state.tenderText);
+    return v == null ? null : v;
+  }
+
+  function currentChange() {
+    var t = tenderedCentavos();
+    if (t == null) return null;
+    return cash.change(cartTotal(), t);
+  }
+
+  function renderPay() {
+    var total = cartTotal();
+    $("pay-total").textContent = money.peso(total);
+    document.querySelectorAll("#pay-methods .pay-method").forEach(function (b) {
+      b.classList.toggle("on", b.getAttribute("data-method") === state.payMethod ||
+        (state.payMethod === "ONLINE" && b.getAttribute("data-method") === (state.platformName || "")));
+    });
+    /* methods: CASH, GCash, Maya — store payMethod as CASH or the platform name */
+    document.querySelectorAll("#pay-methods .pay-method").forEach(function (b) {
+      var m = b.getAttribute("data-method");
+      var on = (m === "CASH" && state.payMethod === "CASH") || (m !== "CASH" && state.payMethod === m);
+      b.classList.toggle("on", on);
+    });
+    var cashOn = state.payMethod === "CASH";
+    $("cash-pad").classList.toggle("hidden", !cashOn);
+    $("pay-hint").textContent = cashOn ? "Leave the amount blank for exact change, or tap a bill." : "No cash drawer — mark this as paid when the transfer is in.";
+    if (cashOn) {
+      var tend = tenderedCentavos();
+      $("tender-display").textContent = state.tenderText === "" ? "Exact" : (tend == null ? "—" : money.peso(tend));
+      var ch = currentChange();
+      var chEl = $("change-display");
+      if (ch == null) {
+        chEl.textContent = "Too short";
+        chEl.classList.add("short");
+      } else {
+        chEl.textContent = money.peso(ch);
+        chEl.classList.remove("short");
+      }
+      var chips = $("quick-cash");
+      chips.innerHTML = "";
+      cash.suggest(total).forEach(function (amt) {
+        var b = document.createElement("button");
+        b.type = "button";
+        b.className = "chip" + (state.tenderText !== "" && tend === amt ? " on" : "");
+        b.textContent = amt === total ? "Exact" : money.peso(amt);
+        b.addEventListener("click", function () {
+          state.tenderText = money.plain(amt);
+          renderPay();
+        });
+        chips.appendChild(b);
+      });
+    }
+    var ok = state.cart.length > 0 && (state.payMethod !== "CASH" || currentChange() != null);
+    $("btn-confirm-pay").disabled = !ok;
+  }
+
+  function onKey(k) {
+    if (k === "C") { state.tenderText = ""; renderPay(); return; }
+    if (k === "⌫") { state.tenderText = state.tenderText.slice(0, -1); renderPay(); return; }
+    if (state.tenderText.length >= 10) return;
+    if (k === "." && state.tenderText.indexOf(".") !== -1) return;
+    if (k === "." && !state.tenderText) state.tenderText = "0";
+    /* after two decimal digits, ignore more */
+    var dot = state.tenderText.indexOf(".");
+    if (dot !== -1 && state.tenderText.length - dot > 2 && k !== "00") return;
+    if (k === "00") {
+      if (dot !== -1) return;
+      state.tenderText += "00";
+    } else {
+      if (state.tenderText === "0" && k !== ".") state.tenderText = k;
+      else state.tenderText += k;
+    }
+    renderPay();
+  }
+
+  function buildKeypad() {
+    var pad = $("keypad");
+    pad.innerHTML = "";
+    ["1","2","3","4","5","6","7","8","9",".","0","⌫"].forEach(function (k) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "key";
+      b.textContent = k;
+      b.addEventListener("click", function () { onKey(k); });
+      pad.appendChild(b);
+    });
+    var clear = document.createElement("button");
+    clear.type = "button";
+    clear.className = "key";
+    clear.textContent = "C";
+    clear.style.gridColumn = "1 / -1";
+    clear.addEventListener("click", function () { onKey("C"); });
+    pad.appendChild(clear);
+  }
+
+  function openPay() {
+    if (!state.cart.length) return;
+    state.payMethod = "CASH";
+    state.tenderText = "";
+    showView("pay");
+  }
+
+  function confirmPay() {
+    if (!state.cart.length) return;
+    var total = cartTotal();
+    var isCash = state.payMethod === "CASH";
+    var tend = isCash ? tenderedCentavos() : total;
+    var ch = isCash ? cash.change(total, tend) : 0;
+    if (isCash && (tend == null || ch == null)) { renderPay(); return; }
+    var lines = state.cart.map(function (ln) {
+      return { qty: ln.qty, name: ln.name, unitCentavos: ln.unitCentavos, lineCentavos: ln.qty * ln.unitCentavos };
+    });
+    $("btn-confirm-pay").disabled = true;
+    return storage.recordSale({
+      customerName: state.customerName,
+      lines: lines,
+      totalCentavos: total,
+      paymentType: isCash ? "CASH" : "ONLINE",
+      platformName: isCash ? null : state.payMethod,
+      tenderedCentavos: isCash ? tend : null,
+      changeCentavos: isCash ? ch : null
+    }).then(function (sale) {
+      state.sales.unshift(sale);
+      state.currentSale = sale;
+      state.receiptFromHistory = false;
+      state.cart = [];
+      state.customerName = "";
+      $("customer-name").value = "";
+      renderCart();
+      tickClock();
+      openReceipt(sale, false);
+    }).catch(function () {
+      $("pay-hint").textContent = "The sale could not be saved. Please try again.";
+      $("btn-confirm-pay").disabled = false;
+    });
+  }
+
+  function openReceipt(sale, fromHistory) {
+    state.currentSale = sale;
+    state.receiptFromHistory = !!fromHistory;
+    receipt.render(sale, state.settings, $("receipt-mount"));
+    $("btn-receipt-close").textContent = fromHistory ? "Back to history" : "Close";
+    showView("receipt");
+  }
+
+  function newOrder() {
+    clearCart();
+    state.currentSale = null;
+    goCounter();
+  }
+
+  /* ---------- orders / calling ---------- */
+  function speakCall(sale) {
+    var text = receipt.callText(sale);
+    if (!window.speechSynthesis) return;
+    try { window.speechSynthesis.cancel(); } catch (e) {}
+    var u = new SpeechSynthesisUtterance(text);
+    u.lang = "en-US";
+    u.rate = 0.95;
+    window.speechSynthesis.speak(u);
+  }
+
+  function waitLabel(from, now) {
+    var m = Math.max(0, Math.floor((now - from) / 60000));
+    if (m < 1) return "just now";
+    if (m < 60) return m + " min";
+    return Math.floor(m / 60) + " h " + (m % 60) + " min";
+  }
+
+  function clockLabel(from, now) {
+    var s = Math.max(0, Math.floor((now - from) / 1000));
+    var mm = String(Math.floor(s / 60));
+    var ss = s % 60;
+    return mm + ":" + (ss < 10 ? "0" : "") + ss;
+  }
+
+  function isLate(s, now) {
+    return s.status === "PREPARING" && (now - s.paidAt) >= LATE_MS;
+  }
+
+  function updateSaleStatus(sale, patch) {
+    var next = Object.assign({}, sale, patch);
+    return storage.updateSale(next).then(function () {
+      state.sales = state.sales.map(function (s) { return s.id === next.id ? next : s; });
+      if (state.currentSale && state.currentSale.id === next.id) state.currentSale = next;
+      tickClock();
+      if (state.view === "orders") renderOrders();
+      return next;
+    });
+  }
+
+  function callOrder(sale, again) {
+    var nextCount = (sale.callCount || 0) + 1;
+    return updateSaleStatus(sale, { status: "CALLED", callCount: nextCount, statusAtMillis: Date.now() }).then(function (s) {
+      speakCall(s);
+      return s;
+    });
+  }
+
+  function markDone(sale) {
+    return updateSaleStatus(sale, { status: "PICKED_UP", statusAtMillis: Date.now() });
+  }
+
+  function undoDone(sale) {
+    return updateSaleStatus(sale, { status: "CALLED", statusAtMillis: Date.now() });
+  }
+
+  function renderOrders() {
+    var now = Date.now();
+    var day = todayKey();
+    var live = state.sales.filter(function (s) {
+      return s.dayKey === day && (s.status === "PREPARING" || s.status === "CALLED");
+    });
+    var preparing = live.filter(function (s) { return s.status === "PREPARING"; })
+      .sort(function (a, b) { return b.paidAt - a.paidAt; });
+    var calling = live.filter(function (s) { return s.status === "CALLED"; })
+      .sort(function (a, b) { return b.statusAtMillis - a.statusAtMillis; });
+    var done = state.sales.filter(function (s) {
+      return s.dayKey === day && (s.status === "PICKED_UP" || s.status === "CLOSED");
+    }).sort(function (a, b) { return b.statusAtMillis - a.statusAtMillis; });
+
+    $("btn-done-tab").textContent = "Done today · " + done.length;
+    document.querySelectorAll("#orders-tabs .chip").forEach(function (b) {
+      b.classList.toggle("on", b.getAttribute("data-otab") === state.ordersTab);
+    });
+
+    var box = $("orders-list");
+    box.innerHTML = "";
+
+    function card(s, kind) {
+      var el = document.createElement("article");
+      var late = isLate(s, now);
+      var fresh = s.status === "PREPARING" && (now - s.paidAt) < FRESH_MS;
+      el.className = "order-card" + (late ? " late" : "") + (fresh ? " fresh" : "") + (s.status === "CALLED" ? " calling" : "");
+      var tag;
+      if (late) tag = "Late · " + waitLabel(s.paidAt, now);
+      else if (fresh) tag = "NEW";
+      else if (s.status === "CALLED") tag = "Called " + s.callCount + "× · " + clockLabel(s.statusAtMillis, now);
+      else if (s.status === "PICKED_UP") tag = "Done · " + waitLabel(s.statusAtMillis, now) + " ago";
+      else if (s.status === "CLOSED") tag = "Closed";
+      else tag = waitLabel(s.paidAt, now);
+      var items = s.lines.map(function (ln) { return ln.qty + " × " + ln.name; }).join(", ");
+      el.innerHTML =
+        '<div class="order-top">' +
+          '<div><div class="order-no"></div><div class="order-name"></div></div>' +
+          '<div class="order-tag"></div>' +
+        '</div>' +
+        '<div class="order-items"></div>' +
+        '<div class="order-actions"></div>';
+      el.querySelector(".order-no").textContent = s.orderNo;
+      el.querySelector(".order-name").textContent = s.customerName || "—";
+      el.querySelector(".order-tag").textContent = tag;
+      el.querySelector(".order-items").textContent = items + " · " + money.peso(s.totalCentavos);
+      var actions = el.querySelector(".order-actions");
+      if (s.status === "PREPARING") {
+        var callBtn = document.createElement("button");
+        callBtn.type = "button";
+        callBtn.className = "gold-btn";
+        callBtn.textContent = "Ready · Call";
+        callBtn.addEventListener("click", function () { callOrder(s, false); });
+        actions.appendChild(callBtn);
+      } else if (s.status === "CALLED") {
+        var again = document.createElement("button");
+        again.type = "button";
+        again.className = "outline-btn";
+        again.textContent = "Again";
+        again.addEventListener("click", function () { callOrder(s, true); });
+        var doneBtn = document.createElement("button");
+        doneBtn.type = "button";
+        doneBtn.className = "gold-btn";
+        doneBtn.textContent = "Done";
+        doneBtn.addEventListener("click", function () { markDone(s); });
+        actions.appendChild(again);
+        actions.appendChild(doneBtn);
+      } else if (s.status === "PICKED_UP") {
+        var undo = document.createElement("button");
+        undo.type = "button";
+        undo.className = "outline-btn muted";
+        undo.textContent = "Undo done";
+        undo.addEventListener("click", function () { undoDone(s); });
+        actions.appendChild(undo);
+      }
+      box.appendChild(el);
+    }
+
+    if (state.ordersTab === "done") {
+      if (!done.length) box.innerHTML = '<p class="empty">No finished orders yet today.</p>';
+      else done.forEach(function (s) { card(s, "done"); });
+      return;
+    }
+    if (!preparing.length && !calling.length) {
+      box.innerHTML = '<p class="empty">No open orders. New paid orders will show up here.</p>';
+      return;
+    }
+    if (preparing.length) {
+      var h1 = document.createElement("div");
+      h1.className = "order-sec";
+      h1.textContent = "Preparing";
+      box.appendChild(h1);
+      preparing.forEach(function (s) { card(s, "prep"); });
+    }
+    if (calling.length) {
+      var h2 = document.createElement("div");
+      h2.className = "order-sec";
+      h2.textContent = "Calling";
+      box.appendChild(h2);
+      calling.forEach(function (s) { card(s, "call"); });
+    }
+  }
+
+  /* ---------- history / close day ---------- */
+  function renderHistory() {
+    var day = todayKey();
+    var sales = todaySales();
+    var sum = receipt.summarize(day, state.sales);
+    $("history-summary").innerHTML =
+      '<div class="lbl">Today · ' + day + '</div>' +
+      '<div class="sum-grid" style="margin-top:10px">' +
+        '<div><div class="sum-k">Orders</div><div class="sum-v">' + sum.orderCount + '</div></div>' +
+        '<div><div class="sum-k">Total</div><div class="sum-v">' + money.peso(sum.grossCentavos) + '</div></div>' +
+        '<div><div class="sum-k">Cash</div><div class="sum-v">' + money.peso(sum.cashCentavos) + '</div></div>' +
+        '<div><div class="sum-k">GCash</div><div class="sum-v">' + money.peso(sum.gcashCentavos) + '</div></div>' +
+        '<div><div class="sum-k">Maya</div><div class="sum-v">' + money.peso(sum.mayaCentavos) + '</div></div>' +
+        '<div><div class="sum-k">Best seller</div><div class="sum-v" style="font-size:16px">' + (sum.bestSeller ? (sum.bestSeller.name + " · " + sum.bestSeller.qty) : "—") + '</div></div>' +
+      '</div>';
+    var box = $("history-list");
+    box.innerHTML = "";
+    if (!sales.length) {
+      box.innerHTML = '<p class="empty">No sales yet today.</p>';
+      return;
+    }
+    sales.forEach(function (s) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "hist-card";
+      var items = s.lines.map(function (ln) { return ln.qty + " x " + ln.name; }).join(", ");
+      b.innerHTML = '<div class="hist-top"><span></span><span></span></div><div class="hist-sub"></div>';
+      b.querySelector(".hist-top span:first-child").textContent = "No. " + s.orderNo + (s.customerName ? " · " + s.customerName : "");
+      b.querySelector(".hist-top span:last-child").textContent = money.peso(s.totalCentavos);
+      b.querySelector(".hist-sub").textContent = money.formatTime(s.timeMillis) + " · " + receipt.paidLabel(s) + " · " + items + " · " + s.status.replace("_", " ");
+      b.addEventListener("click", function () { openReceipt(s, true); });
+      box.appendChild(b);
+    });
+  }
+
+  function openCloseDay() {
+    var day = todayKey();
+    var sum = receipt.summarize(day, state.sales);
+    $("close-summary").innerHTML =
+      '<div class="sum-grid">' +
+        '<div><div class="sum-k">Orders</div><div class="sum-v">' + sum.orderCount + '</div></div>' +
+        '<div><div class="sum-k">Total</div><div class="sum-v">' + money.peso(sum.grossCentavos) + '</div></div>' +
+        '<div><div class="sum-k">Cash</div><div class="sum-v">' + money.peso(sum.cashCentavos) + '</div></div>' +
+        '<div><div class="sum-k">GCash</div><div class="sum-v">' + money.peso(sum.gcashCentavos) + '</div></div>' +
+        '<div><div class="sum-k">Maya</div><div class="sum-v">' + money.peso(sum.mayaCentavos) + '</div></div>' +
+      '</div>' +
+      (sum.bestSeller ? '<p class="msg">Best seller: ' + sum.bestSeller.name + " (" + sum.bestSeller.qty + ")</p>" : "");
+    $("close-modal").classList.remove("hidden");
+  }
+
+  function confirmCloseDay() {
+    var now = Date.now();
+    var day = todayKey();
+    var jobs = state.sales.filter(function (s) {
+      return s.dayKey === day && s.status !== "PICKED_UP" && s.status !== "CLOSED" && s.status !== "CANCELED";
+    }).map(function (s) {
+      return updateSaleStatus(s, { status: "CLOSED", statusAtMillis: now });
+    });
+    return Promise.all(jobs).then(function () {
+      $("close-modal").classList.add("hidden");
+      renderHistory();
+    });
+  }
+
+  /* ---------- settings / PIN / menu editor ---------- */
+  function openPin(reason) {
+    state.pinReason = reason || "settings";
+    state.pinBuffer = "";
+    $("pin-msg").textContent = "";
+    renderPinDots();
+    $("pin-modal").classList.remove("hidden");
+  }
+
+  function closePin() {
+    $("pin-modal").classList.add("hidden");
+    state.pinBuffer = "";
+  }
+
+  function renderPinDots() {
+    var wrap = $("pin-dots");
+    wrap.innerHTML = "";
+    var i, d;
+    for (i = 0; i < 4; i++) {
+      d = document.createElement("span");
+      d.className = "pin-dot" + (i < state.pinBuffer.length ? " on" : "");
+      wrap.appendChild(d);
+    }
+  }
+
+  function buildPinPad() {
+    var pad = $("pin-pad");
+    pad.innerHTML = "";
+    ["1","2","3","4","5","6","7","8","9","C","0","⌫"].forEach(function (k) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "key";
+      b.textContent = k;
+      b.addEventListener("click", function () { onPin(k); });
+      pad.appendChild(b);
+    });
+  }
+
+  function tryUnlock() {
+    var want = String((state.settings && state.settings.pin) || storage.DEFAULT_PIN);
+    if (state.pinBuffer.length < want.length) return;
+    if (state.pinBuffer === want) {
+      closePin();
+      if (state.pinReason === "settings") {
+        state.settingsUnlocked = true;
+        showView("settings");
+      }
+    } else {
+      $("pin-msg").textContent = "That PIN is not right. Try again.";
+      state.pinBuffer = "";
+      renderPinDots();
+    }
+  }
+
+  function onPin(k) {
+    $("pin-msg").textContent = "";
+    if (k === "C") { state.pinBuffer = ""; renderPinDots(); return; }
+    if (k === "⌫") { state.pinBuffer = state.pinBuffer.slice(0, -1); renderPinDots(); return; }
+    if (state.pinBuffer.length >= 8) return;
+    state.pinBuffer += k;
+    renderPinDots();
+    tryUnlock();
+  }
+
+  function requestSettings() {
+    if (state.settingsUnlocked) { showView("settings"); return; }
+    openPin("settings");
+  }
+
+  function setSwitch(el, on) {
+    el.classList.toggle("on", !!on);
+    el.setAttribute("aria-checked", on ? "true" : "false");
+  }
+
+  function renderSettings() {
+    var box = $("settings-body");
+    document.querySelectorAll("#settings-tabs .chip").forEach(function (b) {
+      b.classList.toggle("on", b.getAttribute("data-stab") === state.settingsTab);
+    });
+    if (state.settingsTab === "menu") {
+      box.innerHTML = '<p class="msg">Prices start at ₱0 with a Sample tag until you set the real price. Editing an item removes the tag.</p>' +
+        '<div class="row-actions" style="margin-bottom:12px"><button type="button" class="gold-btn" id="btn-add-item">Add item</button></div>' +
+        '<div id="editor-list"></div>';
+      var list = $("editor-list");
+      state.menu.categories.forEach(function (cat) {
+        var h = document.createElement("div");
+        h.className = "order-sec";
+        h.textContent = cat.name;
+        list.appendChild(h);
+        state.menu.items.filter(function (i) { return i.categoryId === cat.id; }).forEach(function (item) {
+          var row = document.createElement("button");
+          row.type = "button";
+          row.className = "edit-card hist-card";
+          row.innerHTML = '<div><div class="edit-name"></div><div class="hist-sub"></div></div><div class="edit-price"></div>';
+          row.querySelector(".edit-name").textContent = item.name + (item.favorite ? " ★" : "");
+          row.querySelector(".hist-sub").textContent = (item.isExample ? "Sample · " : "") + (isSoldOut(item) ? "Sold out today" : "On the menu");
+          row.querySelector(".edit-price").textContent = money.peso(item.priceCentavos);
+          row.addEventListener("click", function () { openEdit(item); });
+          list.appendChild(row);
+        });
+      });
+      $("btn-add-item").addEventListener("click", function () { openEdit(null); });
+      return;
+    }
+    if (state.settingsTab === "receipt") {
+      var s = state.settings || {};
+      box.innerHTML =
+        '<div class="field"><label for="set-cashier">Cashier name (optional)</label><input id="set-cashier" type="text" maxlength="40"></div>' +
+        '<div class="field"><label for="set-care">Care note</label><textarea id="set-care" rows="2" maxlength="160"></textarea></div>' +
+        '<div class="field"><label for="set-fb">Facebook or extra line (optional)</label><input id="set-fb" type="text" maxlength="80"></div>' +
+        '<div class="toggle"><span>Print “This is not an official receipt.”</span><button type="button" role="switch" id="set-official"><span></span></button></div>' +
+        '<p class="msg" id="set-msg"></p>' +
+        '<button type="button" class="gold-btn" id="btn-save-receipt">Save receipt text</button>';
+      $("set-cashier").value = s.cashier || "";
+      $("set-care").value = s.careNote == null ? storage.DEFAULT_CARE : s.careNote;
+      $("set-fb").value = s.facebook || "";
+      setSwitch($("set-official"), s.notOfficial !== false);
+      $("set-official").addEventListener("click", function () { setSwitch($("set-official"), !$("set-official").classList.contains("on")); });
+      $("btn-save-receipt").addEventListener("click", function () {
+        storage.setSettings({
+          cashier: $("set-cashier").value.trim(),
+          careNote: $("set-care").value.trim(),
+          facebook: $("set-fb").value.trim(),
+          notOfficial: $("set-official").classList.contains("on")
+        }).then(function (next) {
+          state.settings = next;
+          $("set-msg").className = "msg good";
+          $("set-msg").textContent = "Saved on this device.";
+        });
+      });
+      return;
+    }
+    /* PIN tab */
+    var stillDefault = String((state.settings && state.settings.pin) || storage.DEFAULT_PIN) === storage.DEFAULT_PIN;
+    box.innerHTML =
+      (stillDefault ? '<div class="pin-banner">The PIN is still the default (1234). Please change it before a busy day.</div>' : "") +
+      '<div class="field"><label for="new-pin">New PIN (4 to 8 digits)</label><input id="new-pin" type="password" inputmode="numeric" maxlength="8" autocomplete="new-password"></div>' +
+      '<div class="field"><label for="new-pin2">Type it again</label><input id="new-pin2" type="password" inputmode="numeric" maxlength="8" autocomplete="new-password"></div>' +
+      '<p class="msg" id="pin-save-msg"></p>' +
+      '<button type="button" class="gold-btn" id="btn-save-pin">Save PIN</button>' +
+      '<p class="msg" style="margin-top:16px">This POS works offline after the first load. Add it to the Home Screen for the most reliable save. ' +
+      (state.persistOk ? "Storage is protected on this device." : "If this browser offers it, we have asked to keep the sales data.") + "</p>";
+    $("btn-save-pin").addEventListener("click", function () {
+      var a = String($("new-pin").value || "").trim();
+      var b = String($("new-pin2").value || "").trim();
+      var out = $("pin-save-msg");
+      if (!/^\d{4,8}$/.test(a)) { out.className = "msg bad"; out.textContent = "Use 4 to 8 digits."; return; }
+      if (a !== b) { out.className = "msg bad"; out.textContent = "The two PINs do not match."; return; }
+      storage.setSettings({ pin: a }).then(function (next) {
+        state.settings = next;
+        $("new-pin").value = "";
+        $("new-pin2").value = "";
+        out.className = "msg good";
+        out.textContent = "PIN saved on this device only.";
+        renderSettings();
+        $("pin-save-msg").className = "msg good";
+        $("pin-save-msg").textContent = "PIN saved on this device only.";
+      });
+    });
+  }
+
+  function openEdit(item) {
+    state.editingItem = item;
+    $("edit-title").textContent = item ? "Edit item" : "Add item";
+    $("edit-name").value = item ? item.name : "";
+    $("edit-price").value = item ? money.plain(item.priceCentavos) : "0.00";
+    setSwitch($("edit-fav"), !!(item && item.favorite));
+    setSwitch($("edit-sold"), !!(item && isSoldOut(item)));
+    $("edit-msg").textContent = "";
+    $("btn-edit-delete").classList.toggle("hidden", !item);
+    $("edit-modal").classList.remove("hidden");
+  }
+
+  function closeEdit() {
+    $("edit-modal").classList.add("hidden");
+    state.editingItem = null;
+  }
+
+  function saveEdit() {
+    var name = String($("edit-name").value || "").trim().replace(/\s+/g, " ");
+    var price = money.parse($("edit-price").value);
+    var out = $("edit-msg");
+    if (!name) { out.className = "msg bad"; out.textContent = "Please enter a name."; return Promise.resolve(); }
+    if (price == null || price < 0) { out.className = "msg bad"; out.textContent = "Enter a valid price, for example 150 or 150.00."; return Promise.resolve(); }
+    var fav = $("edit-fav").classList.contains("on");
+    var sold = $("edit-sold").classList.contains("on");
+    var job;
+    if (state.editingItem) {
+      var next = Object.assign({}, state.editingItem, {
+        name: name,
+        priceCentavos: price,
+        favorite: fav,
+        soldOutDay: sold ? todayKey() : null,
+        isExample: false
+      });
+      job = storage.putItem(next);
+    } else {
+      var cat = state.menu.categories[0];
+      if (!cat) { out.className = "msg bad"; out.textContent = "Add a category first."; return Promise.resolve(); }
+      var pos = state.menu.items.filter(function (i) { return i.categoryId === cat.id; }).length;
+      job = storage.putItem({
+        id: storage.nid("item-"),
+        categoryId: cat.id,
+        name: name,
+        priceCentavos: price,
+        position: pos,
+        isExample: false,
+        favorite: fav,
+        soldOutDay: sold ? todayKey() : null
+      });
+    }
+    return job.then(function () { return reloadMenu(); }).then(function () { closeEdit(); });
+  }
+
+  function deleteEdit() {
+    if (!state.editingItem) return Promise.resolve();
+    if (!confirm("Remove " + state.editingItem.name + " from the menu? Past sales will keep the name.")) return Promise.resolve();
+    return storage.deleteItem(state.editingItem.id).then(function () { return reloadMenu(); }).then(function () { closeEdit(); });
+  }
+
+  function reloadMenu() {
+    return storage.getMenu().then(function (menu) {
+      state.menu = menu;
+      renderCategories();
+      renderMenu();
+      if (state.view === "settings") renderSettings();
+    });
+  }
+
+  function reloadSales() {
+    return storage.getSales().then(function (rows) { state.sales = rows; tickClock(); });
+  }
+
+  /* ---------- persist + SW ---------- */
+  function requestPersist() {
+    if (!navigator.storage || !navigator.storage.persist) {
+      state.persistOk = false;
+      return Promise.resolve(false);
+    }
+    return navigator.storage.persist().then(function (ok) {
+      state.persistOk = !!ok;
+      if (!ok && navigator.storage.persisted) {
+        return navigator.storage.persisted().then(function (already) {
+          state.persistOk = !!already;
+          return state.persistOk;
+        });
+      }
+      return state.persistOk;
+    }).catch(function () { state.persistOk = false; return false; });
+  }
+
+  /* ---------- wire ---------- */
+  function wire() {
+    buildKeypad();
+    buildPinPad();
+    setAppHeight();
+    window.addEventListener("resize", function () { setAppHeight(); fitSlip(); });
+    window.addEventListener("orientationchange", function () { setTimeout(function () { setAppHeight(); fitSlip(); }, 80); });
+    if (window.visualViewport) {
+      visualViewport.addEventListener("resize", function () { setAppHeight(); fitSlip(); });
+      visualViewport.addEventListener("scroll", setAppHeight);
+    }
+
+    $("nav-counter").addEventListener("click", function () { showView("counter"); });
+    $("nav-orders").addEventListener("click", function () { showView("orders"); });
+    $("nav-history").addEventListener("click", function () { showView("history"); });
+    $("nav-settings").addEventListener("click", requestSettings);
+
+    $("btn-clear-cart").addEventListener("click", function () {
+      if (!state.cart.length) return;
+      clearCart();
+    });
+    $("customer-name").addEventListener("input", function () {
+      state.customerName = $("customer-name").value;
+    });
+    $("btn-pay").addEventListener("click", openPay);
+    $("btn-pay-back").addEventListener("click", function () { showView("counter"); });
+    document.querySelectorAll("#pay-methods .pay-method").forEach(function (b) {
+      b.addEventListener("click", function () {
+        var m = b.getAttribute("data-method");
+        state.payMethod = m;
+        renderPay();
+      });
+    });
+    $("btn-confirm-pay").addEventListener("click", confirmPay);
+    $("btn-new-order").addEventListener("click", newOrder);
+    $("btn-receipt-close").addEventListener("click", function () {
+      if (state.receiptFromHistory) showView("history");
+      else showView("orders");
+    });
+
+    document.querySelectorAll("#orders-tabs .chip").forEach(function (b) {
+      b.addEventListener("click", function () {
+        state.ordersTab = b.getAttribute("data-otab");
+        renderOrders();
+      });
+    });
+    document.querySelectorAll("#settings-tabs .chip").forEach(function (b) {
+      b.addEventListener("click", function () {
+        state.settingsTab = b.getAttribute("data-stab");
+        renderSettings();
+      });
+    });
+
+    $("btn-export-csv").addEventListener("click", function () {
+      receipt.downloadCsv(todaySales(), todayKey());
+    });
+    $("btn-close-day").addEventListener("click", openCloseDay);
+    $("btn-close-cancel").addEventListener("click", function () { $("close-modal").classList.add("hidden"); });
+    $("btn-close-confirm").addEventListener("click", confirmCloseDay);
+    $("btn-pin-cancel").addEventListener("click", closePin);
+    $("btn-edit-cancel").addEventListener("click", closeEdit);
+    $("btn-edit-save").addEventListener("click", saveEdit);
+    $("btn-edit-delete").addEventListener("click", deleteEdit);
+    $("edit-fav").addEventListener("click", function () { setSwitch($("edit-fav"), !$("edit-fav").classList.contains("on")); });
+    $("edit-sold").addEventListener("click", function () { setSwitch($("edit-sold"), !$("edit-sold").classList.contains("on")); });
+
+    /* Allow clicking modal backdrop to close (not the sheet). */
+    ["pin-modal", "edit-modal", "close-modal"].forEach(function (id) {
+      $(id).addEventListener("click", function (e) {
+        if (e.target === $(id)) $(id).classList.add("hidden");
+      });
+    });
+  }
+
+  /* ---------- QA hooks for Playwright ---------- */
+  window.__bbposQA = {
+    state: function () { return state; },
+    go: showView,
+    addByName: function (name) {
+      var item = state.menu.items.filter(function (i) { return i.name === name; })[0];
+      if (!item) throw new Error("No item named " + name);
+      addToCart(item);
+      return cartTotal();
+    },
+    setQty: setQty,
+    setName: function (n) { state.customerName = n; $("customer-name").value = n; },
+    cartTotal: cartTotal,
+    openPay: openPay,
+    setPayMethod: function (m) { state.payMethod = m; renderPay(); },
+    setTender: function (text) { state.tenderText = String(text); renderPay(); },
+    confirmPay: confirmPay,
+    setPrice: function (name, pesosText) {
+      var item = state.menu.items.filter(function (i) { return i.name === name; })[0];
+      if (!item) return Promise.reject(new Error("No item named " + name));
+      var price = money.parse(String(pesosText));
+      var next = Object.assign({}, item, { priceCentavos: price, isExample: false });
+      return storage.putItem(next).then(reloadMenu);
+    },
+    todaySales: todaySales,
+    lastSale: function () { return state.currentSale || todaySales()[0] || null; },
+    callFirst: function () {
+      var s = state.sales.filter(function (x) { return x.status === "PREPARING"; })[0];
+      return s ? callOrder(s, false) : Promise.resolve(null);
+    },
+    markFirstDone: function () {
+      var s = state.sales.filter(function (x) { return x.status === "CALLED"; })[0];
+      return s ? markDone(s) : Promise.resolve(null);
+    },
+    unlockSettings: function () { state.settingsUnlocked = true; showView("settings"); },
+    summarizeToday: function () { return receipt.summarize(todayKey(), state.sales); },
+    closeDay: confirmCloseDay,
+    money: money,
+    reload: function () { return Promise.all([reloadMenu(), reloadSales()]); }
+  };
+
+  function boot() {
+    wire();
+    storage.init().then(function () {
+      return Promise.all([storage.getSettings(), storage.getMenu(), storage.getSales()]);
+    }).then(function (triple) {
+      state.settings = triple[0];
+      state.menu = triple[1];
+      state.sales = triple[2];
+      renderCategories();
+      renderMenu();
+      renderCart();
+      tickClock();
+      state.clockTimer = setInterval(tickClock, 1000);
+      requestPersist();
+      showView("counter");
+    }).catch(function (err) {
+      console.error(err);
+      $("menu-grid").innerHTML = '<p class="empty">This browser could not open the local sales store. Avoid private or incognito tabs.</p>';
+    });
+    if ("serviceWorker" in navigator && !qaMode()) {
+      navigator.serviceWorker.register("sw.js").catch(function () {});
+    }
+  }
+
+  boot();
+})();
