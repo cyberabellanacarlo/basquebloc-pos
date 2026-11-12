@@ -59,6 +59,7 @@ function expectSlipSafe(customer, tag, opts) {
   expect(z.atMax.hintOverlaps || [], tag + " hint overlaps at bottom").toEqual([]);
   expect(z.at0.nearHits || [], tag + " lines within 4px of hint or zigzag at top").toEqual([]);
   expect(z.atMax.nearHits || [], tag + " lines within 4px of hint or zigzag at bottom").toEqual([]);
+  expect(customer.moneyFits || [], tag + " money overflow").toEqual([]);
   if (z.at0.minZigzagGapCss != null) {
     expect(z.at0.minZigzagGapCss, tag + " zigzag gap css px at top").toBeGreaterThanOrEqual(4);
   }
@@ -158,9 +159,9 @@ test("full cash checkout, receipt, history, reload, offline", async ({ page, con
   for (const n of measured.footerFonts) {
     expect(n.fontPx, n.text).toBeGreaterThanOrEqual(14);
   }
-  require("fs").mkdirSync(require("path").join(__dirname, "..", "shots", "receipt_v5_3"), { recursive: true });
+  require("fs").mkdirSync(require("path").join(__dirname, "..", "shots", "receipt_v5_4"), { recursive: true });
   require("fs").writeFileSync(
-    require("path").join(__dirname, "..", "shots", "receipt_v5_3", "measured.json"),
+    require("path").join(__dirname, "..", "shots", "receipt_v5_4", "measured.json"),
     JSON.stringify(measured, null, 2)
   );
 
@@ -330,7 +331,7 @@ test("screenshots at phone, Android tablet, and 13-inch iPad sizes", async ({ pa
 });
 
 test("receipt typography, torn edges, and Show customer at every size", async ({ page }) => {
-  const recDir = path.join(SHOTS, "receipt_v5_3");
+  const recDir = path.join(SHOTS, "receipt_v5_4");
   fs.mkdirSync(recDir, { recursive: true });
 
   await page.setViewportSize({ width: 1280, height: 800 });
@@ -412,9 +413,9 @@ test("receipt typography, torn edges, and Show customer at every size", async ({
 
     const cust = await page.evaluate(() => window.__bbposQA.measureReceipt());
     expectSlipSafe(cust.customer, vp.id);
-    if (cust.customer.itemFontPx) expect(cust.customer.itemFontPx, vp.id + " item font").toBeGreaterThanOrEqual(20);
-    if (cust.customer.amtFontPx) expect(cust.customer.amtFontPx, vp.id + " amt font").toBeGreaterThanOrEqual(20);
-    if (cust.customer.totalFontPx) expect(cust.customer.totalFontPx, vp.id + " total font").toBeGreaterThanOrEqual(40);
+    if (cust.customer.itemFontPx) expect(cust.customer.itemFontPx, vp.id + " item font").toBeGreaterThanOrEqual(14);
+    if (cust.customer.amtFontPx) expect(cust.customer.amtFontPx, vp.id + " amt font").toBeGreaterThanOrEqual(14);
+    if (cust.customer.totalFontPx) expect(cust.customer.totalFontPx, vp.id + " total font").toBeGreaterThanOrEqual(28);
     for (const n of cust.customer.footerFonts) {
       expect(n.fontPx, vp.id + " " + n.text).toBeGreaterThanOrEqual(14);
     }
@@ -638,9 +639,9 @@ test("receipt typography, torn edges, and Show customer at every size", async ({
       const measured = await page.evaluate(() => window.__bbposQA.measureReceipt());
       const c = measured.customer;
       expectSlipSafe(c, tag);
-      expect(c.itemFontPx, tag + " item font").toBeGreaterThanOrEqual(20);
-      expect(c.amtFontPx, tag + " amt font").toBeGreaterThanOrEqual(20);
-      expect(c.totalFontPx, tag + " total font").toBeGreaterThanOrEqual(40);
+      expect(c.itemFontPx, tag + " item font").toBeGreaterThanOrEqual(14);
+      expect(c.amtFontPx, tag + " amt font").toBeGreaterThanOrEqual(14);
+      expect(c.totalFontPx, tag + " total font").toBeGreaterThanOrEqual(28);
       expect(c.totalColor, tag + " total color").toBe("rgb(138, 100, 32)");
       sizeReports.push({ viewport: { ...vp, items: count }, customer: c });
       await page.locator("#btn-customer-close").click();
@@ -650,4 +651,129 @@ test("receipt typography, torn edges, and Show customer at every size", async ({
   reports.push(...sizeReports);
   fs.writeFileSync(path.join(recDir, "customer_measured.json"), JSON.stringify(reports, null, 2));
   fs.writeFileSync(path.join(recDir, "size_matrix.json"), JSON.stringify(sizeReports, null, 2));
+});
+
+test("large money amounts shrink or wrap and never clip", async ({ page }) => {
+  const recDir = path.join(SHOTS, "receipt_v5_4");
+  fs.mkdirSync(recDir, { recursive: true });
+
+  const cases = [
+    { id: "12345", total: "12345", tender: "13000", eight: true },
+    { id: "123456", total: "123456", tender: "200000", eight: false },
+    { id: "12345_cash200k", total: "12345", tender: "200000", eight: true }
+  ];
+  const views = [
+    { id: "412x915", width: 412, height: 915, zoom: 1 },
+    { id: "1280x800", width: 1280, height: 800, zoom: 1 },
+    { id: "1024x1366_text200", width: 1024, height: 1366, zoom: 2 }
+  ];
+
+  async function checkout(totalPesos, tender, eight) {
+    await page.evaluate(async ({ totalPesos, tender, eight }) => {
+      const names = window.__bbposQA.state().menu.items.map((i) => i.name);
+      window.__bbposQA.state().cart = [];
+      if (eight) {
+        const prices = [1500, 1800, 1200, 90, 2200, 2800, 1600, 1155];
+        if (names.length < 8) throw new Error("menu too small");
+        for (let i = 0; i < 8; i++) {
+          await window.__bbposQA.setPrice(names[i], String(prices[i]));
+          window.__bbposQA.addByName(names[i]);
+        }
+      } else {
+        await window.__bbposQA.setPrice("Classic Slice", String(totalPesos));
+        window.__bbposQA.addByName("Classic Slice");
+      }
+      window.__bbposQA.setName("Long Order");
+      window.__bbposQA.openPay();
+      window.__bbposQA.setTender(String(tender));
+    }, { totalPesos, tender, eight });
+    await expect(page.locator("#view-pay")).toBeVisible();
+  }
+
+  async function moneyOk(tag, rootSel) {
+    const issues = await page.evaluate((rootSel) => {
+      const root = rootSel ? document.querySelector(rootSel) : document;
+      return window.__bbposQA.measureMoney(root || document, root && (root.querySelector(".slip-shell") || root.querySelector(".slip-body") || root));
+    }, rootSel);
+    expect(issues, tag).toEqual([]);
+  }
+
+  await page.setViewportSize({ width: 412, height: 915 });
+  await page.goto("/?qa=1");
+  await ready(page);
+
+  for (const sale of cases) {
+    await page.evaluate(() => { document.documentElement.style.zoom = ""; });
+    await page.setViewportSize({ width: 412, height: 915 });
+    await page.goto("/?qa=1");
+    await ready(page);
+    await checkout(sale.total, sale.tender, sale.eight);
+    await page.waitForTimeout(80);
+    await page.screenshot({ path: path.join(recDir, sale.id + "_412x915_pay.png"), fullPage: false });
+    await moneyOk(sale.id + " pay", "#view-pay");
+    await expect(page.locator("#pay-total")).toContainText(sale.total === "12345" ? "₱12,345" : "₱123,456");
+    await expect(page.locator("#tender-display")).toContainText(sale.tender === "200000" ? "₱200,000" : "₱13,000");
+
+    await page.evaluate(() => window.__bbposQA.confirmPay());
+    await expect(page.locator("#view-receipt")).toBeVisible();
+    await page.waitForTimeout(120);
+    await page.screenshot({ path: path.join(recDir, sale.id + "_412x915_staff.png"), fullPage: false });
+    const staff = await page.evaluate(() => window.__bbposQA.measureReceipt());
+    expect(staff.moneyFits || [], sale.id + " staff money").toEqual([]);
+    await expect(page.locator("#receipt-total")).toContainText(sale.total === "12345" ? "₱12,345.00" : "₱123,456.00");
+
+    await page.evaluate(() => {
+      const el = document.getElementById("customer-overlay");
+      el.requestFullscreen = undefined;
+      el.webkitRequestFullscreen = undefined;
+    });
+
+    for (const vp of views) {
+      await page.evaluate(() => window.__bbposQA.closeCustomer());
+      await page.evaluate(() => { document.documentElement.style.zoom = ""; });
+      await page.setViewportSize({ width: vp.width, height: vp.height });
+      await page.evaluate((z) => { document.documentElement.style.zoom = z === 1 ? "" : String(z); }, vp.zoom);
+      await page.evaluate(() => window.__bbposQA.openReceipt(window.__bbposQA.lastSale(), false));
+      await page.waitForTimeout(160);
+      const tag = sale.id + "_" + vp.id;
+      await page.locator("#btn-show-customer").click();
+      await expect(page.locator("#customer-overlay")).toBeVisible();
+      await page.waitForFunction(() => {
+        const img = document.querySelector("#customer-mount .slip-logo");
+        return img && img.complete && img.naturalWidth > 0;
+      });
+      await page.waitForTimeout(200);
+      await scrollCustomerSlip(page, "top");
+      await page.screenshot({ path: path.join(recDir, tag + "_customer_top.png"), fullPage: false });
+      await scrollCustomerSlip(page, "mid");
+      await page.screenshot({ path: path.join(recDir, tag + "_customer_mid.png"), fullPage: false });
+      await scrollCustomerSlip(page, "bottom");
+      await page.screenshot({ path: path.join(recDir, tag + "_customer_bottom.png"), fullPage: false });
+      await scrollCustomerSlip(page, "top");
+      const measured = await page.evaluate(() => window.__bbposQA.measureReceipt());
+      const c = measured.customer;
+      expectSlipSafe(c, tag, { skipBox: vp.zoom !== 1 });
+      expect(c.totalFontPx, tag + " total font min").toBeGreaterThanOrEqual(28);
+      expect(c.moneyFits || [], tag + " moneyFits").toEqual([]);
+      const midMoney = await page.evaluate(() => {
+        const sc = document.querySelector("#customer-mount .slip-scroll");
+        if (sc) {
+          sc.scrollTop = Math.round(Math.max(0, sc.scrollHeight - sc.clientHeight) / 2);
+          sc.dispatchEvent(new Event("scroll", { bubbles: true }));
+        }
+        const shell = document.querySelector("#customer-mount .slip-shell");
+        return window.__bbposQA.measureMoney(shell, shell && (shell.querySelector(".slip-body") || shell));
+      });
+      expect(midMoney, tag + " mid money").toEqual([]);
+      await page.locator("#btn-customer-close").click();
+    }
+
+    await page.evaluate(() => { document.documentElement.style.zoom = ""; });
+    await page.setViewportSize({ width: 412, height: 915 });
+    await page.evaluate(() => window.__bbposQA.go("history"));
+    await expect(page.locator("#view-history")).toBeVisible();
+    await page.waitForTimeout(80);
+    await page.screenshot({ path: path.join(recDir, sale.id + "_412x915_history.png"), fullPage: false });
+    await moneyOk(sale.id + " history", "#view-history");
+  }
 });

@@ -182,7 +182,7 @@ img { max-width: 100%; border: 0; }
 .item-card:disabled { opacity: 0.45; cursor: default; }
 .item-name { font-weight: 700; font-size: 15px; line-height: 1.25; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; word-break: normal; overflow-wrap: normal; hyphens: none; }
 .item-meta { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
-.item-price { font-weight: 800; font-size: 16px; color: var(--gold); white-space: nowrap; }
+.item-price { font-weight: 800; font-size: 16px; color: var(--gold); white-space: nowrap; overflow: visible; min-width: 0; }
 .tag { font-size: 10px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted-gold); border: 1px solid var(--line); border-radius: 999px; padding: 2px 6px; }
 .item-card.sold .item-price { color: var(--text2); }
 
@@ -201,7 +201,7 @@ img { max-width: 100%; border: 0; }
   border-bottom: 1px solid var(--line);
 }
 .cart-line-name { font-weight: 600; font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.cart-line-amt { font-weight: 700; color: var(--items); white-space: nowrap; }
+.cart-line-amt { font-weight: 700; color: var(--items); white-space: nowrap; overflow: visible; min-width: 0; }
 .cart-line-ops { grid-column: 1 / -1; display: flex; align-items: center; gap: 4px; }
 .qty-btn { width: 48px; height: 48px; padding: 0; border-radius: 50%; font-size: 18px; letter-spacing: 0; }
 .qty-btn.filled { background: var(--gold); color: var(--bg); }
@@ -215,7 +215,7 @@ img { max-width: 100%; border: 0; }
 }
 #customer-name:focus { outline: none; border-color: var(--gold); }
 .total-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.total-row .amt { font-weight: 800; font-size: 28px; color: var(--gold); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.total-row .amt { font-weight: 800; font-size: 28px; color: var(--gold); white-space: nowrap; overflow: visible; min-width: 0; }
 #btn-pay { width: 100%; min-height: 56px; font-size: 14px; }
 
 /* Narrow: cart docks under the menu */
@@ -260,12 +260,12 @@ img { max-width: 100%; border: 0; }
 #view-pay { background: var(--bg); }
 .pay-wrap { flex: 1 1 auto; min-height: 0; overflow: auto; padding: 16px 16px calc(16px + var(--safe-b)); }
 .pay-card { max-width: 560px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; }
-.pay-total { font-size: 36px; font-weight: 800; color: var(--gold); letter-spacing: -0.02em; }
+.pay-total { font-size: 36px; font-weight: 800; color: var(--gold); letter-spacing: -0.02em; white-space: nowrap; overflow: visible; max-width: 100%; }
 #pay-methods { display: flex; gap: 8px; flex-wrap: wrap; }
 .pay-method { flex: 1 1 30%; min-width: 96px; background: var(--card2); border-color: var(--line); color: var(--text); text-transform: none; letter-spacing: 0; font-size: 16px; }
 .pay-method.on { border-color: var(--gold); color: var(--gold); background: rgba(232, 188, 125, 0.14); }
 #cash-pad .received-row, #cash-pad .change-row { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
-#tender-display, #change-display { font-size: 22px; font-weight: 800; }
+#tender-display, #change-display { font-size: 22px; font-weight: 800; white-space: nowrap; overflow: visible; min-width: 0; }
 #change-display.short { color: var(--danger); }
 #quick-cash { display: flex; flex-wrap: wrap; gap: 8px; }
 #keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 8px; }
@@ -331,9 +331,31 @@ body.receipt-open #topbar { display: none; }
 .slip-rule { border-top: 1px dashed #bfb5a4; margin: 10px 0; }
 .slip-row { display: flex; justify-content: space-between; gap: 12px; text-align: left; font-size: 20px; line-height: 1.35; }
 .slip-item { flex: 1 1 auto; min-width: 0; overflow-wrap: break-word; word-break: normal; font-size: 20px; }
-.slip-amt { flex: 0 0 auto; font-variant-numeric: tabular-nums; font-size: 20px; }
+.slip-amt { flex: 0 1 auto; min-width: 0; font-variant-numeric: tabular-nums; font-size: 20px; white-space: nowrap; overflow: visible; }
 .slip-total, .slip-total span, #receipt-total {
   font-weight: 800; font-size: 40px; color: var(--slip-gold); margin: 2px 0; letter-spacing: 0.02em; line-height: 1.15;
+}
+.slip-total { align-items: baseline; flex-wrap: nowrap; }
+.slip-total.is-wrapped,
+.slip-row.is-wrapped,
+.total-row.is-wrapped,
+.received-row.is-wrapped,
+.change-row.is-wrapped,
+.hist-top.is-wrapped {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+}
+.slip-total.is-wrapped #receipt-total,
+.slip-row.is-wrapped .slip-amt,
+.total-row.is-wrapped .amt,
+.received-row.is-wrapped #tender-display,
+.change-row.is-wrapped #change-display,
+.hist-top.is-wrapped .money-amt {
+  text-align: right;
+  width: 100%;
+  max-width: 100%;
+  margin-left: 0;
 }
 .slip-change { font-weight: 800; font-size: 20px; }
 .slip-thanks { font-weight: 800; font-size: 22px; letter-spacing: 0.14em; margin: 16px 0 8px; }
@@ -474,9 +496,11 @@ body.receipt-open #topbar { display: none; }
 }
 .sum-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; }
 .sum-k { font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--text2); }
-.sum-v { font-weight: 800; font-size: 20px; color: var(--gold); }
+.sum-v { font-weight: 800; font-size: 20px; color: var(--gold); overflow: visible; min-width: 0; }
+.sum-v.money-amt { white-space: nowrap; }
 .hist-card { width: 100%; text-align: left; color: inherit; cursor: pointer; display: block; letter-spacing: 0; text-transform: none; }
-.hist-top { display: flex; justify-content: space-between; gap: 8px; font-weight: 700; }
+.hist-top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; font-weight: 700; }
+.hist-top .money-amt { white-space: nowrap; overflow: visible; min-width: 0; flex: 0 1 auto; }
 .hist-sub { color: var(--text2); font-size: 13px; margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* ---------- Settings / editor ---------- */

@@ -34,10 +34,10 @@
     var payBlock;
     if (sale.changeCentavos != null && sale.paymentType === "CASH") {
       payBlock =
-        '<div class="slip-row"><span>' + esc(paid) + '</span><span>' + esc(M.pesoExact(sale.tenderedCentavos || sale.totalCentavos)) + '</span></div>' +
-        '<div class="slip-row slip-change"><span>Change</span><span>' + esc(M.pesoExact(sale.changeCentavos)) + '</span></div>';
+        '<div class="slip-row"><span>' + esc(paid) + '</span><span class="slip-amt">' + esc(M.pesoExact(sale.tenderedCentavos || sale.totalCentavos)) + '</span></div>' +
+        '<div class="slip-row slip-change"><span>Change</span><span class="slip-amt">' + esc(M.pesoExact(sale.changeCentavos)) + '</span></div>';
     } else {
-      payBlock = '<div class="slip-row"><span>Paid \u2014 ' + esc(paid) + '</span><span>' + esc(M.pesoExact(sale.totalCentavos)) + '</span></div>';
+      payBlock = '<div class="slip-row"><span>Paid \u2014 ' + esc(paid) + '</span><span class="slip-amt">' + esc(M.pesoExact(sale.totalCentavos)) + '</span></div>';
     }
 
     var leftMeta = cashier ? ("Cashier: " + cashier) : ("Paid: " + paid);

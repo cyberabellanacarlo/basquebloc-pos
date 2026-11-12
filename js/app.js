@@ -93,6 +93,138 @@
     shell.style.marginBottom = (extraH / 2) + "px";
   }
 
+
+  var MONEY_SEL = ".slip-amt, #receipt-total, #cart-total, #pay-total, #tender-display, #change-display, .cart-line-amt, .item-price, .money-amt";
+  var MONEY_MIN_RATIO = 0.7;
+
+  function looksLikeMoney(el) {
+    var t = (el.textContent || "").replace(/\s+/g, "");
+    if (!t) return false;
+    if (t === "Exact" || t === "—" || t === "-" || t === "Too short") return false;
+    return t.indexOf("₱") !== -1;
+  }
+
+  function resetMoneyFit(root) {
+    if (!root) return;
+    Array.prototype.forEach.call(root.querySelectorAll(MONEY_SEL), function (el) {
+      el.style.fontSize = "";
+      el.style.maxWidth = "";
+    });
+    Array.prototype.forEach.call(root.querySelectorAll(".slip-total, .slip-row, .total-row, .received-row, .change-row, .hist-top"), function (el) {
+      el.classList.remove("is-wrapped");
+    });
+  }
+
+  function moneyAvailableWidth(el) {
+    var parent = el.parentElement;
+    if (!parent) return 0;
+    var cs = getComputedStyle(parent);
+    var inner = parent.clientWidth - (parseFloat(cs.paddingLeft) || 0) - (parseFloat(cs.paddingRight) || 0);
+    var gap = parseFloat(cs.columnGap);
+    if (isNaN(gap)) gap = parseFloat(cs.gap) || 0;
+    var used = 0;
+    var others = 0;
+    Array.prototype.forEach.call(parent.children, function (kid) {
+      if (kid === el) return;
+      used += kid.getBoundingClientRect().width;
+      others += 1;
+    });
+    var avail = inner - used - gap * others;
+    return Math.max(0, avail);
+  }
+
+  function moneyOverflows(el, bound) {
+    if (el.scrollWidth > el.clientWidth + 0.5) return true;
+    if (!bound) return false;
+    var r = el.getBoundingClientRect();
+    var b = bound.getBoundingClientRect();
+    return r.left < b.left - 0.5 || r.right > b.right + 0.5;
+  }
+
+  function shrinkMoneyTo(el, basePx, minPx, bound) {
+    var lo = minPx, hi = basePx, best = minPx, i, mid;
+    el.style.fontSize = minPx + "px";
+    if (moneyOverflows(el, bound)) return false;
+    best = minPx;
+    for (i = 0; i < 10; i++) {
+      mid = (lo + hi) / 2;
+      el.style.fontSize = mid + "px";
+      if (moneyOverflows(el, bound)) {
+        hi = mid;
+      } else {
+        best = mid;
+        lo = mid;
+      }
+    }
+    el.style.fontSize = best + "px";
+    return !moneyOverflows(el, bound);
+  }
+
+  function wrapMoneyRow(el) {
+    var row = el.closest(".slip-total") || el.closest(".total-row") || el.closest(".received-row") || el.closest(".change-row") || el.closest(".hist-top") || ((el.classList.contains("slip-amt") && el.closest(".slip-row")) ? el.closest(".slip-row") : null);
+    if (!row) return false;
+    row.classList.add("is-wrapped");
+    el.style.maxWidth = "100%";
+    return true;
+  }
+
+  function fitOneMoney(el, bound) {
+    if (!looksLikeMoney(el)) return;
+    var cs = getComputedStyle(el);
+    if (cs.display === "none" || cs.visibility === "hidden") return;
+    var base = parseFloat(cs.fontSize);
+    if (!(base > 0)) return;
+    var min = base * MONEY_MIN_RATIO;
+    var avail = moneyAvailableWidth(el);
+    if (avail > 0) el.style.maxWidth = avail + "px";
+    el.style.fontSize = base + "px";
+    if (!moneyOverflows(el, bound)) return;
+    if (shrinkMoneyTo(el, base, min, bound)) return;
+    if (wrapMoneyRow(el)) {
+      el.style.fontSize = base + "px";
+      var parent = el.parentElement;
+      var inner = parent ? (parent.clientWidth - (parseFloat(getComputedStyle(parent).paddingLeft) || 0) - (parseFloat(getComputedStyle(parent).paddingRight) || 0)) : 0;
+      el.style.maxWidth = (inner > 0 ? inner : el.parentElement ? el.parentElement.clientWidth : avail) + "px";
+      if (!moneyOverflows(el, bound)) return;
+      if (shrinkMoneyTo(el, base, min, bound)) return;
+    }
+    /* Last resort: go below 70% so money is never clipped. */
+    shrinkMoneyTo(el, base, Math.max(10, min * 0.6), bound);
+  }
+
+  function fitMoneyAmounts(root) {
+    if (!root) root = document;
+    resetMoneyFit(root);
+    /* Force layout after reset, then fit each amount. */
+    void (root.body ? root.body.offsetWidth : (root.offsetWidth || 0));
+    var els = root.querySelectorAll(MONEY_SEL);
+    Array.prototype.forEach.call(els, function (el) {
+      var bound = el.closest(".slip-body") || el.closest(".slip-shell") || el.closest(".pay-card") || el.closest(".item-card") || el.closest(".cart-line") || el.closest(".total-row") || el.closest(".hist-card") || el.closest(".sum-grid") || el.closest("#history-summary") || el.closest("#close-summary") || el.parentElement;
+      fitOneMoney(el, bound);
+    });
+  }
+
+  function measureMoneyFit(root, bound) {
+    var issues = [];
+    if (!root) return issues;
+    Array.prototype.forEach.call(root.querySelectorAll(MONEY_SEL), function (el) {
+      if (!looksLikeMoney(el)) return;
+      var text = (el.textContent || "").trim();
+      var r = el.getBoundingClientRect();
+      if (el.scrollWidth > el.clientWidth + 0.5) {
+        issues.push({ kind: "scroll", text: text, scroll: +el.scrollWidth.toFixed(2), client: +el.clientWidth.toFixed(2) });
+      }
+      var box = bound || el.closest(".slip-shell") || el.closest(".slip-body") || el.parentElement;
+      if (box) {
+        var b = box.getBoundingClientRect();
+        if (r.left < b.left - 0.5 || r.right > b.right + 0.5 || r.top < b.top - 0.5 || r.bottom > b.bottom + 0.5) {
+          issues.push({ kind: "box", text: text, el: { left: +r.left.toFixed(2), right: +r.right.toFixed(2), top: +r.top.toFixed(2), bottom: +r.bottom.toFixed(2) }, bound: { left: +b.left.toFixed(2), right: +b.right.toFixed(2), top: +b.top.toFixed(2), bottom: +b.bottom.toFixed(2) } });
+        }
+      }
+    });
+    return issues;
+  }
+
   function fitSlipIn(chrome, opts) {
     opts = opts || {};
     if (!chrome) return;
@@ -105,6 +237,7 @@
     var availW = chrome.clientWidth - pad;
     var availH = chrome.clientHeight - pad;
     if (availW <= 8 || availH <= 8) return;
+    fitMoneyAmounts(shell);
     var w = shell.offsetWidth;
     var h = shell.offsetHeight;
     if (!w || !h) return;
@@ -149,6 +282,7 @@
     }
     var thanks = shell.querySelector(".slip-thanks");
     if (thanks) thanks.style.margin = "";
+    resetMoneyFit(shell);
   }
 
   function updateMoreHint(shell) {
@@ -262,6 +396,22 @@
 
     if (h * scale > targetH) {
       capCustomerSlipHeight(shell, targetH / scale);
+      w = shell.offsetWidth;
+      h = shell.offsetHeight;
+      if (!w || !h) return;
+      scale = targetW / w;
+      if (!(scale > 0)) return;
+    }
+
+    fitMoneyAmounts(shell);
+    w = shell.offsetWidth;
+    h = shell.offsetHeight;
+    if (!w || !h) return;
+    scale = targetW / w;
+    if (!(scale > 0)) return;
+    if (h * scale > targetH) {
+      capCustomerSlipHeight(shell, targetH / scale);
+      fitMoneyAmounts(shell);
       w = shell.offsetWidth;
       h = shell.offsetHeight;
       if (!w || !h) return;
@@ -408,6 +558,7 @@
       if (!sold) b.addEventListener("click", function () { addToCart(item); });
       grid.appendChild(b);
     });
+    fitMoneyAmounts(grid);
   }
 
   function addToCart(item) {
@@ -462,6 +613,7 @@
     }
     $("cart-total").textContent = money.peso(cartTotal());
     $("btn-pay").disabled = state.cart.length === 0;
+    fitMoneyAmounts($("view-counter") || document);
   }
 
   /* ---------- pay ---------- */
@@ -521,6 +673,7 @@
     }
     var ok = state.cart.length > 0 && (state.payMethod !== "CASH" || currentChange() != null);
     $("btn-confirm-pay").disabled = !ok;
+    fitMoneyAmounts($("view-pay") || document);
   }
 
   function onKey(k) {
@@ -787,16 +940,17 @@
       '<div class="lbl">Today · ' + day + '</div>' +
       '<div class="sum-grid" style="margin-top:10px">' +
         '<div><div class="sum-k">Orders</div><div class="sum-v">' + sum.orderCount + '</div></div>' +
-        '<div><div class="sum-k">Total</div><div class="sum-v">' + money.peso(sum.grossCentavos) + '</div></div>' +
-        '<div><div class="sum-k">Cash</div><div class="sum-v">' + money.peso(sum.cashCentavos) + '</div></div>' +
-        '<div><div class="sum-k">GCash</div><div class="sum-v">' + money.peso(sum.gcashCentavos) + '</div></div>' +
-        '<div><div class="sum-k">Maya</div><div class="sum-v">' + money.peso(sum.mayaCentavos) + '</div></div>' +
+        '<div><div class="sum-k">Total</div><div class="sum-v money-amt">' + money.peso(sum.grossCentavos) + '</div></div>' +
+        '<div><div class="sum-k">Cash</div><div class="sum-v money-amt">' + money.peso(sum.cashCentavos) + '</div></div>' +
+        '<div><div class="sum-k">GCash</div><div class="sum-v money-amt">' + money.peso(sum.gcashCentavos) + '</div></div>' +
+        '<div><div class="sum-k">Maya</div><div class="sum-v money-amt">' + money.peso(sum.mayaCentavos) + '</div></div>' +
         '<div><div class="sum-k">Best seller</div><div class="sum-v" style="font-size:16px">' + (sum.bestSeller ? (sum.bestSeller.name + " · " + sum.bestSeller.qty) : "—") + '</div></div>' +
       '</div>';
     var box = $("history-list");
     box.innerHTML = "";
     if (!sales.length) {
       box.innerHTML = '<p class="empty">No sales yet today.</p>';
+      fitMoneyAmounts($("view-history") || document);
       return;
     }
     sales.forEach(function (s) {
@@ -806,11 +960,13 @@
       var items = s.lines.map(function (ln) { return ln.qty + " x " + ln.name; }).join(", ");
       b.innerHTML = '<div class="hist-top"><span></span><span></span></div><div class="hist-sub"></div>';
       b.querySelector(".hist-top span:first-child").textContent = "No. " + s.orderNo + (s.customerName ? " · " + s.customerName : "");
+      b.querySelector(".hist-top span:last-child").className = "money-amt";
       b.querySelector(".hist-top span:last-child").textContent = money.peso(s.totalCentavos);
       b.querySelector(".hist-sub").textContent = money.formatTime(s.timeMillis) + " · " + receipt.paidLabel(s) + " · " + items + " · " + s.status.replace("_", " ");
       b.addEventListener("click", function () { openReceipt(s, true); });
       box.appendChild(b);
     });
+    fitMoneyAmounts($("view-history") || document);
   }
 
   function openCloseDay() {
@@ -819,13 +975,14 @@
     $("close-summary").innerHTML =
       '<div class="sum-grid">' +
         '<div><div class="sum-k">Orders</div><div class="sum-v">' + sum.orderCount + '</div></div>' +
-        '<div><div class="sum-k">Total</div><div class="sum-v">' + money.peso(sum.grossCentavos) + '</div></div>' +
-        '<div><div class="sum-k">Cash</div><div class="sum-v">' + money.peso(sum.cashCentavos) + '</div></div>' +
-        '<div><div class="sum-k">GCash</div><div class="sum-v">' + money.peso(sum.gcashCentavos) + '</div></div>' +
-        '<div><div class="sum-k">Maya</div><div class="sum-v">' + money.peso(sum.mayaCentavos) + '</div></div>' +
+        '<div><div class="sum-k">Total</div><div class="sum-v money-amt">' + money.peso(sum.grossCentavos) + '</div></div>' +
+        '<div><div class="sum-k">Cash</div><div class="sum-v money-amt">' + money.peso(sum.cashCentavos) + '</div></div>' +
+        '<div><div class="sum-k">GCash</div><div class="sum-v money-amt">' + money.peso(sum.gcashCentavos) + '</div></div>' +
+        '<div><div class="sum-k">Maya</div><div class="sum-v money-amt">' + money.peso(sum.mayaCentavos) + '</div></div>' +
       '</div>' +
       (sum.bestSeller ? '<p class="msg">Best seller: ' + sum.bestSeller.name + " (" + sum.bestSeller.qty + ")</p>" : "");
     $("close-modal").classList.remove("hidden");
+    fitMoneyAmounts($("close-modal") || document);
   }
 
   function confirmCloseDay() {
@@ -1098,10 +1255,10 @@
     buildKeypad();
     buildPinPad();
     setAppHeight();
-    window.addEventListener("resize", function () { setAppHeight(); fitSlip(); });
+    window.addEventListener("resize", function () { setAppHeight(); fitSlip(); fitMoneyAmounts(document); });
     window.addEventListener("orientationchange", function () { setTimeout(function () { setAppHeight(); fitSlip(); }, 80); });
     if (window.visualViewport) {
-      visualViewport.addEventListener("resize", function () { setAppHeight(); fitSlip(); });
+      visualViewport.addEventListener("resize", function () { setAppHeight(); fitSlip(); fitMoneyAmounts(document); });
       visualViewport.addEventListener("scroll", setAppHeight);
     }
 
@@ -1189,6 +1346,8 @@
   /* ---------- QA hooks for Playwright ---------- */
   window.__bbposQA = {
     state: function () { return state; },
+    fitMoney: function (root) { fitMoneyAmounts(root || document); },
+    measureMoney: function (root, bound) { return measureMoneyFit(root || document, bound || null); },
     go: showView,
     addByName: function (name) {
       var item = state.menu.items.filter(function (i) { return i.name === name; })[0];
@@ -1488,7 +1647,8 @@
           totalFontPx: px(custTotal, "fontSize"),
           totalColor: custTotal ? getComputedStyle(custTotal).color : "",
           footerFonts: noteFonts(customerRoot),
-          logo: logoInfo(customerRoot.querySelector(".slip-logo"))
+          logo: logoInfo(customerRoot.querySelector(".slip-logo")),
+          moneyFits: measureMoneyFit(customerShell, customerShell.querySelector(".slip-body") || customerShell)
         };
       }
       return {
@@ -1506,7 +1666,8 @@
         hasFacebookPH: !!(root.textContent && root.textContent.indexOf("facebook.com/BasqueBlocPH") !== -1),
         footerFonts: noteFonts(root),
         logo: logoInfo(logo),
-        customer: customer
+        customer: customer,
+        moneyFits: measureMoneyFit(root, root.querySelector(".slip-shell") || root.querySelector(".slip-body") || root)
       };
     }
   };
