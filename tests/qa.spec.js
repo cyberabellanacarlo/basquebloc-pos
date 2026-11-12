@@ -51,8 +51,20 @@ function expectSlipSafe(customer, tag, opts) {
   expect(z.atMax.topFadeShown, tag + " top fade at bottom").toBe(!!z.atMax.overflow);
   if (z.at0.hintShown) {
     expect(z.at0.hintOverlaps || [], tag + " hint overlaps visible text at top").toEqual([]);
+    expect(z.at0.creamAboveCss, tag + " cream above hint glyphs").toBeGreaterThanOrEqual(6);
+    expect(z.at0.stripHeightCss, tag + " hint strip css height").toBeGreaterThanOrEqual(22);
+    expect(z.at0.stripHeightCss, tag + " hint strip css height cap").toBeLessThanOrEqual(26);
+    expect(z.at0.minHintGapCss, tag + " hint gap css px").toBeGreaterThanOrEqual(4);
   }
   expect(z.atMax.hintOverlaps || [], tag + " hint overlaps at bottom").toEqual([]);
+  expect(z.at0.nearHits || [], tag + " lines within 4px of hint or zigzag at top").toEqual([]);
+  expect(z.atMax.nearHits || [], tag + " lines within 4px of hint or zigzag at bottom").toEqual([]);
+  if (z.at0.minZigzagGapCss != null) {
+    expect(z.at0.minZigzagGapCss, tag + " zigzag gap css px at top").toBeGreaterThanOrEqual(4);
+  }
+  if (z.atMax.minZigzagGapCss != null) {
+    expect(z.atMax.minZigzagGapCss, tag + " zigzag gap css px at bottom").toBeGreaterThanOrEqual(4);
+  }
 }
 
 
@@ -146,9 +158,9 @@ test("full cash checkout, receipt, history, reload, offline", async ({ page, con
   for (const n of measured.footerFonts) {
     expect(n.fontPx, n.text).toBeGreaterThanOrEqual(14);
   }
-  require("fs").mkdirSync(require("path").join(__dirname, "..", "shots", "receipt_v5_2"), { recursive: true });
+  require("fs").mkdirSync(require("path").join(__dirname, "..", "shots", "receipt_v5_3"), { recursive: true });
   require("fs").writeFileSync(
-    require("path").join(__dirname, "..", "shots", "receipt_v5_2", "measured.json"),
+    require("path").join(__dirname, "..", "shots", "receipt_v5_3", "measured.json"),
     JSON.stringify(measured, null, 2)
   );
 
@@ -318,7 +330,7 @@ test("screenshots at phone, Android tablet, and 13-inch iPad sizes", async ({ pa
 });
 
 test("receipt typography, torn edges, and Show customer at every size", async ({ page }) => {
-  const recDir = path.join(SHOTS, "receipt_v5_2");
+  const recDir = path.join(SHOTS, "receipt_v5_3");
   fs.mkdirSync(recDir, { recursive: true });
 
   await page.setViewportSize({ width: 1280, height: 800 });
@@ -545,12 +557,65 @@ test("receipt typography, torn edges, and Show customer at every size", async ({
               if (hit) overlaps.push((el.textContent || "").trim().slice(0, 40));
             });
           }
+          const tr = shell ? getComputedStyle(shell).transform : "none";
+          const sm = tr && tr !== "none" ? tr.match(/matrix\(([^,]+)/) : null;
+          const scale = sm ? Math.abs(parseFloat(sm[1])) || 1 : 1;
+          const zoom = parseFloat(document.documentElement.style.zoom || "1") || 1;
+          const sx = scale * zoom || 1;
+          const creamAbove = (stripR && hintR) ? (hintR.top - stripR.top) : 0;
+          const nearHits = [];
+          let minHintGap = Infinity;
+          function vertGap(a, b) {
+            if (!a || !b) return Infinity;
+            if (a.right <= b.left + 0.5 || a.left >= b.right - 0.5) return Infinity;
+            if (a.bottom <= b.top) return b.top - a.bottom;
+            if (b.bottom <= a.top) return a.top - b.bottom;
+            return -1 * (Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top));
+          }
+          if (sc && stripR && hintR) {
+            const topZ = shell.querySelector(".slip-tear-top");
+            const botZ = shell.querySelector(".slip-tear-bottom");
+            const topZR = topZ ? topZ.getBoundingClientRect() : null;
+            const botZR = botZ ? botZ.getBoundingClientRect() : null;
+            shell.querySelectorAll(".slip-logo, .slip-brand, .slip-tagline, .slip-city, .slip-ord-label, .slip-ord-no, .slip-cust, .slip-row, .slip-thanks, .slip-note, .slip-care, .slip-official").forEach((el) => {
+              const r = el.getBoundingClientRect();
+              const vis = {
+                left: Math.max(r.left, port.left),
+                top: Math.max(r.top, port.top),
+                right: Math.min(r.right, port.right),
+                bottom: Math.min(r.bottom, port.bottom, stripR.top)
+              };
+              if (vis.right - vis.left < 0.5 || vis.bottom - vis.top < 0.5) return;
+              const text = (el.textContent || "").trim().slice(0, 40);
+              const gHint = vertGap(vis, hintR);
+              if (gHint < minHintGap) minHintGap = gHint;
+              if (gHint < 4) nearHits.push({ target: "hint", text, gap: +gHint.toFixed(2) });
+              const visPort = {
+                left: Math.max(r.left, port.left),
+                top: Math.max(r.top, port.top),
+                right: Math.min(r.right, port.right),
+                bottom: Math.min(r.bottom, port.bottom)
+              };
+              if (topZR) {
+                const g = vertGap(visPort, topZR);
+                if (g < 4) nearHits.push({ target: "top-zigzag", text, gap: +g.toFixed(2) });
+              }
+              if (botZR) {
+                const g = vertGap(visPort, botZR);
+                if (g < 4) nearHits.push({ target: "bottom-zigzag", text, gap: +g.toFixed(2) });
+              }
+            });
+          }
           return {
             scrollTop: sc ? sc.scrollTop : 0,
             max: sc ? sc.scrollHeight - sc.clientHeight : 0,
             topFade: !!(topFade && !topFade.hidden),
             bottomHint: !!(more && !more.hidden),
             stripH: stripR ? stripR.height : 0,
+            stripHCss: stripR ? stripR.height / sx : 0,
+            creamAboveCss: creamAbove / sx,
+            minHintGapCss: minHintGap === Infinity ? null : minHintGap / sx,
+            nearHits,
             hintOverlaps: overlaps
           };
         });
@@ -558,8 +623,11 @@ test("receipt typography, torn edges, and Show customer at every size", async ({
         expect(mid.scrollTop, tag + " mid not at bottom").toBeLessThan(mid.max - 1);
         expect(mid.topFade, tag + " mid top fade").toBe(true);
         expect(mid.bottomHint, tag + " mid bottom hint").toBe(true);
-        expect(mid.stripH, tag + " mid strip height").toBeGreaterThanOrEqual(14);
-        expect(mid.stripH, tag + " mid strip height cap").toBeLessThanOrEqual(20);
+        expect(mid.stripHCss, tag + " mid strip css height").toBeGreaterThanOrEqual(22);
+        expect(mid.stripHCss, tag + " mid strip css height cap").toBeLessThanOrEqual(26);
+        expect(mid.creamAboveCss, tag + " mid cream above glyphs").toBeGreaterThanOrEqual(6);
+        expect(mid.minHintGapCss, tag + " mid hint gap css px").toBeGreaterThanOrEqual(4);
+        expect(mid.nearHits, tag + " mid lines within 4px of hint or zigzag").toEqual([]);
         expect(mid.hintOverlaps, tag + " mid hint overlaps visible text").toEqual([]);
       }
       if (count === 8 && (vp.id === "android_tab_land" || vp.id === "phone_port")) {

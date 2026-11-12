@@ -1340,6 +1340,13 @@
           var r = el.getBoundingClientRect();
           return r.width > 0 && r.height > 0;
         }
+        function vertGap(a, b) {
+          if (!a || !b) return Infinity;
+          if (a.right <= b.left + 0.5 || a.left >= b.right - 0.5) return Infinity;
+          if (a.bottom <= b.top) return b.top - a.bottom;
+          if (b.bottom <= a.top) return a.top - b.bottom;
+          return -1 * (Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top));
+        }
         function safetyAt(scrollTop) {
           if (scroll) scroll.scrollTop = scrollTop;
           updateMoreHint(customerShell);
@@ -1378,13 +1385,26 @@
           });
           var hintOn = hintVisible(more);
           var hintOverlaps = [];
+          var nearHits = [];
           var stripR = null;
           var hintR = null;
+          var minHintGapPx = Infinity;
+          var minZigzagGapPx = Infinity;
           if (hintOn && strip && hintEl) {
             stripR = strip.getBoundingClientRect();
             hintR = hintEl.getBoundingClientRect();
-            lineBoxes.forEach(function (item) {
-              var c = item.c;
+          }
+          lineBoxes.forEach(function (item) {
+            var c = item.c;
+            var text = (item.el.textContent || item.el.getAttribute("alt") || "").trim().slice(0, 40);
+            var gTop = topZ ? vertGap(c, topR) : Infinity;
+            var gBot = botZ ? vertGap(c, botR) : Infinity;
+            if (gTop < minZigzagGapPx) minZigzagGapPx = gTop;
+            if (gBot < minZigzagGapPx) minZigzagGapPx = gBot;
+            if (gTop < 4 || gBot < 4) {
+              nearHits.push({ target: gTop <= gBot ? "top-zigzag" : "bottom-zigzag", text: text, gap: +(Math.min(gTop, gBot)).toFixed(2) });
+            }
+            if (hintOn && stripR && hintR) {
               /* Visible text is the part of the line in the scroll port that is not fully behind the opaque strip. */
               var vis = {
                 left: c.left,
@@ -1395,19 +1415,26 @@
               if (vis.bottom - vis.top < 0.5 || vis.right - vis.left < 0.5) return;
               if (overlap(vis, hintR, 0.5)) {
                 hintOverlaps.push({
-                  text: (item.el.textContent || item.el.getAttribute("alt") || "").trim().slice(0, 40),
+                  text: text,
                   top: +vis.top.toFixed(2),
                   bottom: +vis.bottom.toFixed(2)
                 });
               }
-            });
-          }
+              var gHint = vertGap(vis, hintR);
+              if (gHint < minHintGapPx) minHintGapPx = gHint;
+              if (gHint < 4) {
+                nearHits.push({ target: "hint", text: text, gap: +gHint.toFixed(2) });
+              }
+            }
+          });
           var scale = currentScale();
           var zoom = parseFloat(document.documentElement.style.zoom || "1") || 1;
+          var sx = scale * zoom || 1;
           var gapPx = botZ ? (botR.top - lastBottom) : 0;
-          var gapCss = scale * zoom ? (gapPx / (scale * zoom)) : gapPx;
+          var gapCss = gapPx / sx;
           var overflow = !!(scroll && scroll.scrollHeight > scroll.clientHeight + 1);
           var atBottom = !scroll || (scroll.scrollTop + scroll.clientHeight >= scroll.scrollHeight - 2);
+          var creamAbovePx = (hintOn && stripR && hintR) ? (hintR.top - stripR.top) : 0;
           return {
             scrollTop: scroll ? scroll.scrollTop : 0,
             overflow: overflow,
@@ -1415,7 +1442,15 @@
             hintShown: hintOn,
             topFadeShown: hintVisible(topFade),
             hintOverlaps: hintOverlaps,
+            nearHits: nearHits,
             stripHeightPx: stripR ? +stripR.height.toFixed(2) : 0,
+            stripHeightCss: stripR ? +(stripR.height / sx).toFixed(2) : 0,
+            creamAbovePx: +creamAbovePx.toFixed(2),
+            creamAboveCss: +(creamAbovePx / sx).toFixed(2),
+            minHintGapPx: minHintGapPx === Infinity ? null : +minHintGapPx.toFixed(2),
+            minHintGapCss: minHintGapPx === Infinity ? null : +(minHintGapPx / sx).toFixed(2),
+            minZigzagGapPx: minZigzagGapPx === Infinity ? null : +minZigzagGapPx.toFixed(2),
+            minZigzagGapCss: minZigzagGapPx === Infinity ? null : +(minZigzagGapPx / sx).toFixed(2),
             hits: hits,
             lastText: lastText,
             lastLineGapPx: +gapPx.toFixed(2),
