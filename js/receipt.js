@@ -61,7 +61,7 @@
         '<div class="slip-rule"></div>' +
         linesHtml +
         '<div class="slip-rule"></div>' +
-        '<div class="slip-row slip-total"><span>TOTAL</span><span id="receipt-total">' + esc(M.pesoExact(sale.totalCentavos)) + '</span></div>' +
+        '<div class="slip-row slip-total"><span>TOTAL</span><span id="receipt-total" class="slip-amt">' + esc(M.pesoExact(sale.totalCentavos)) + '</span></div>' +
         '<div class="slip-rule"></div>' +
         payBlock +
         '<div class="slip-thanks">SALAMAT!</div>' +

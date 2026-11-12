@@ -96,12 +96,17 @@
 
   var MONEY_SEL = ".slip-amt, #receipt-total, #cart-total, #pay-total, #tender-display, #change-display, .cart-line-amt, .item-price, .money-amt";
   var MONEY_MIN_RATIO = 0.7;
+  var MONEY_EPS = 0.5;
 
   function looksLikeMoney(el) {
     var t = (el.textContent || "").replace(/\s+/g, "");
     if (!t) return false;
     if (t === "Exact" || t === "—" || t === "-" || t === "Too short") return false;
     return t.indexOf("₱") !== -1;
+  }
+
+  function moneyRow(el) {
+    return el.closest(".slip-total") || el.closest(".slip-row") || el.closest(".total-row") || el.closest(".received-row") || el.closest(".change-row") || el.closest(".hist-top") || el.closest(".cart-line") || el.closest(".item-meta") || el.parentElement;
   }
 
   function resetMoneyFit(root) {
@@ -115,49 +120,81 @@
     });
   }
 
+  function rowContentWidth(row) {
+    if (!row) return 0;
+    var cs = getComputedStyle(row);
+    return row.clientWidth - (parseFloat(cs.paddingLeft) || 0) - (parseFloat(cs.paddingRight) || 0);
+  }
+
+  function layoutScaleX(el) {
+    var w = el.offsetWidth;
+    if (!(w > 0)) return 1;
+    return el.getBoundingClientRect().width / w;
+  }
+
+  /* Row content box in the same coordinates as getBoundingClientRect (handles scale/zoom). */
+  function rowContentBox(row) {
+    var r = row.getBoundingClientRect();
+    var cs = getComputedStyle(row);
+    var sx = layoutScaleX(row);
+    var pl = ((parseFloat(cs.paddingLeft) || 0) + (parseFloat(cs.borderLeftWidth) || 0)) * sx;
+    var pr = ((parseFloat(cs.paddingRight) || 0) + (parseFloat(cs.borderRightWidth) || 0)) * sx;
+    return { left: r.left + pl, right: r.right - pr };
+  }
+
+  /* Available width for the amount, in layout CSS pixels: row content minus label and gap. */
   function moneyAvailableWidth(el) {
-    var parent = el.parentElement;
-    if (!parent) return 0;
-    var cs = getComputedStyle(parent);
-    var inner = parent.clientWidth - (parseFloat(cs.paddingLeft) || 0) - (parseFloat(cs.paddingRight) || 0);
+    var row = moneyRow(el);
+    if (!row) return 0;
+    var inner = rowContentWidth(row);
+    if (row.classList.contains("is-wrapped")) return Math.max(0, inner);
+    var cs = getComputedStyle(row);
     var gap = parseFloat(cs.columnGap);
     if (isNaN(gap)) gap = parseFloat(cs.gap) || 0;
-    var used = 0;
-    var others = 0;
-    Array.prototype.forEach.call(parent.children, function (kid) {
+    var used = 0, others = 0;
+    Array.prototype.forEach.call(row.children, function (kid) {
       if (kid === el) return;
-      used += kid.getBoundingClientRect().width;
+      used += kid.offsetWidth;
       others += 1;
     });
-    var avail = inner - used - gap * others;
-    return Math.max(0, avail);
+    return Math.max(0, inner - used - gap * others);
   }
 
-  function moneyOverflows(el, bound) {
-    if (el.scrollWidth > el.clientWidth + 0.5) return true;
-    if (!bound) return false;
+  function moneyOverflowsRow(el, row) {
+    if (el.clientWidth >= 1 && el.scrollWidth > el.clientWidth + MONEY_EPS) return true;
+    if (!row) return false;
     var r = el.getBoundingClientRect();
-    var b = bound.getBoundingClientRect();
-    return r.left < b.left - 0.5 || r.right > b.right + 0.5;
+    var c = rowContentBox(row);
+    return r.left < c.left - MONEY_EPS || r.right > c.right + MONEY_EPS;
   }
 
-  function shrinkMoneyTo(el, basePx, minPx, bound) {
-    var lo = minPx, hi = basePx, best = minPx, i, mid;
+  function shrinkMoneyTo(el, basePx, minPx, row) {
+    var lo, hi, best, i, mid, px;
+    /* Prefer the stylesheet size whenever it already fits (avoids 39.45 from binary search). */
+    el.style.fontSize = "";
+    void el.offsetWidth;
+    if (!moneyOverflowsRow(el, row)) return true;
+    lo = minPx;
+    hi = basePx;
+    best = 0;
     el.style.fontSize = minPx + "px";
-    if (moneyOverflows(el, bound)) return false;
+    void el.offsetWidth;
+    if (moneyOverflowsRow(el, row)) return false;
     best = minPx;
-    for (i = 0; i < 10; i++) {
+    for (i = 0; i < 12; i++) {
       mid = (lo + hi) / 2;
       el.style.fontSize = mid + "px";
-      if (moneyOverflows(el, bound)) {
-        hi = mid;
-      } else {
-        best = mid;
-        lo = mid;
-      }
+      if (moneyOverflowsRow(el, row)) hi = mid;
+      else { best = mid; lo = mid; }
+    }
+    /* Snap to a whole pixel at or above the last fit, then drop back to the stylesheet if close. */
+    for (px = Math.min(Math.ceil(best + MONEY_EPS), Math.round(basePx)); px >= minPx; px--) {
+      el.style.fontSize = (px >= basePx - MONEY_EPS) ? "" : (px + "px");
+      void el.offsetWidth;
+      if (!moneyOverflowsRow(el, row)) return true;
     }
     el.style.fontSize = best + "px";
-    return !moneyOverflows(el, bound);
+    return !moneyOverflowsRow(el, row);
   }
 
   function wrapMoneyRow(el) {
@@ -168,57 +205,73 @@
     return true;
   }
 
-  function fitOneMoney(el, bound) {
+  function fitOneMoney(el) {
     if (!looksLikeMoney(el)) return;
     var cs = getComputedStyle(el);
     if (cs.display === "none" || cs.visibility === "hidden") return;
+    var row = moneyRow(el);
+    el.style.fontSize = "";
+    el.style.maxWidth = "none";
+    void el.offsetWidth;
+    cs = getComputedStyle(el);
     var base = parseFloat(cs.fontSize);
     if (!(base > 0)) return;
     var min = base * MONEY_MIN_RATIO;
     var avail = moneyAvailableWidth(el);
+
+    /* If the amount already sits inside the row content box at the base size, do not shrink. */
+    if (!moneyOverflowsRow(el, row)) {
+      el.style.maxWidth = "";
+      return;
+    }
+
     if (avail > 0) el.style.maxWidth = avail + "px";
-    el.style.fontSize = base + "px";
-    if (!moneyOverflows(el, bound)) return;
-    if (shrinkMoneyTo(el, base, min, bound)) return;
+    if (shrinkMoneyTo(el, base, min, row)) return;
+
     if (wrapMoneyRow(el)) {
-      el.style.fontSize = base + "px";
-      var parent = el.parentElement;
-      var inner = parent ? (parent.clientWidth - (parseFloat(getComputedStyle(parent).paddingLeft) || 0) - (parseFloat(getComputedStyle(parent).paddingRight) || 0)) : 0;
-      el.style.maxWidth = (inner > 0 ? inner : el.parentElement ? el.parentElement.clientWidth : avail) + "px";
-      if (!moneyOverflows(el, bound)) return;
-      if (shrinkMoneyTo(el, base, min, bound)) return;
+      el.style.fontSize = "";
+      var full = rowContentWidth(row);
+      el.style.maxWidth = (full > 0 ? full + "px" : "100%");
+      void el.offsetWidth;
+      if (!moneyOverflowsRow(el, row)) return;
+      if (shrinkMoneyTo(el, base, min, row)) return;
     }
     /* Last resort: go below 70% so money is never clipped. */
-    shrinkMoneyTo(el, base, Math.max(10, min * 0.6), bound);
+    shrinkMoneyTo(el, base, Math.max(10, min * 0.6), row);
   }
 
   function fitMoneyAmounts(root) {
     if (!root) root = document;
     resetMoneyFit(root);
-    /* Force layout after reset, then fit each amount. */
     void (root.body ? root.body.offsetWidth : (root.offsetWidth || 0));
-    var els = root.querySelectorAll(MONEY_SEL);
-    Array.prototype.forEach.call(els, function (el) {
-      var bound = el.closest(".slip-body") || el.closest(".slip-shell") || el.closest(".pay-card") || el.closest(".item-card") || el.closest(".cart-line") || el.closest(".total-row") || el.closest(".hist-card") || el.closest(".sum-grid") || el.closest("#history-summary") || el.closest("#close-summary") || el.parentElement;
-      fitOneMoney(el, bound);
+    Array.prototype.forEach.call(root.querySelectorAll(MONEY_SEL), function (el) {
+      fitOneMoney(el);
     });
   }
 
-  function measureMoneyFit(root, bound) {
+  function measureMoneyFit(root) {
     var issues = [];
     if (!root) return issues;
     Array.prototype.forEach.call(root.querySelectorAll(MONEY_SEL), function (el) {
       if (!looksLikeMoney(el)) return;
-      var text = (el.textContent || "").trim();
-      var r = el.getBoundingClientRect();
-      if (el.scrollWidth > el.clientWidth + 0.5) {
-        issues.push({ kind: "scroll", text: text, scroll: +el.scrollWidth.toFixed(2), client: +el.clientWidth.toFixed(2) });
+      var text = (el.textContent || "").replace(/\s+/g, " ").trim();
+      if (el.clientWidth >= 1 && el.scrollWidth > el.clientWidth + MONEY_EPS) {
+        issues.push({ kind: "scrollWidth", text: text, scroll: +el.scrollWidth.toFixed(2), client: +el.clientWidth.toFixed(2) });
       }
-      var box = bound || el.closest(".slip-shell") || el.closest(".slip-body") || el.parentElement;
-      if (box) {
-        var b = box.getBoundingClientRect();
-        if (r.left < b.left - 0.5 || r.right > b.right + 0.5 || r.top < b.top - 0.5 || r.bottom > b.bottom + 0.5) {
-          issues.push({ kind: "box", text: text, el: { left: +r.left.toFixed(2), right: +r.right.toFixed(2), top: +r.top.toFixed(2), bottom: +r.bottom.toFixed(2) }, bound: { left: +b.left.toFixed(2), right: +b.right.toFixed(2), top: +b.top.toFixed(2), bottom: +b.bottom.toFixed(2) } });
+      var row = moneyRow(el);
+      if (row) {
+        var r = el.getBoundingClientRect();
+        var c = rowContentBox(row);
+        if (r.left < c.left - MONEY_EPS || r.right > c.right + MONEY_EPS) {
+          issues.push({
+            kind: "outside-row",
+            text: text,
+            elLeft: +r.left.toFixed(2),
+            elRight: +r.right.toFixed(2),
+            rowContentLeft: +c.left.toFixed(2),
+            rowContentRight: +c.right.toFixed(2),
+            overRight: +(r.right - c.right).toFixed(2)
+          });
         }
       }
     });
@@ -1255,11 +1308,25 @@
     buildKeypad();
     buildPinPad();
     setAppHeight();
-    window.addEventListener("resize", function () { setAppHeight(); fitSlip(); fitMoneyAmounts(document); });
-    window.addEventListener("orientationchange", function () { setTimeout(function () { setAppHeight(); fitSlip(); }, 80); });
+    function fitCashierMoney() {
+      ["view-counter", "view-pay", "view-history", "close-modal"].forEach(function (id) {
+        var el = $(id);
+        if (el) fitMoneyAmounts(el);
+      });
+    }
+
+    window.addEventListener("resize", function () { setAppHeight(); fitSlip(); fitCashierMoney(); });
+    window.addEventListener("orientationchange", function () { setTimeout(function () { setAppHeight(); fitSlip(); fitCashierMoney(); }, 80); });
     if (window.visualViewport) {
-      visualViewport.addEventListener("resize", function () { setAppHeight(); fitSlip(); fitMoneyAmounts(document); });
+      visualViewport.addEventListener("resize", function () { setAppHeight(); fitSlip(); fitCashierMoney(); });
       visualViewport.addEventListener("scroll", setAppHeight);
+    }
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(function () {
+        setAppHeight();
+        fitSlip();
+        fitCashierMoney();
+      });
     }
 
     $("nav-counter").addEventListener("click", function () { showView("counter"); });
@@ -1347,7 +1414,7 @@
   window.__bbposQA = {
     state: function () { return state; },
     fitMoney: function (root) { fitMoneyAmounts(root || document); },
-    measureMoney: function (root, bound) { return measureMoneyFit(root || document, bound || null); },
+    measureMoney: function (root) { return measureMoneyFit(root || document); },
     go: showView,
     addByName: function (name) {
       var item = state.menu.items.filter(function (i) { return i.name === name; })[0];
@@ -1648,7 +1715,7 @@
           totalColor: custTotal ? getComputedStyle(custTotal).color : "",
           footerFonts: noteFonts(customerRoot),
           logo: logoInfo(customerRoot.querySelector(".slip-logo")),
-          moneyFits: measureMoneyFit(customerShell, customerShell.querySelector(".slip-body") || customerShell)
+          moneyFits: measureMoneyFit(customerShell)
         };
       }
       return {
@@ -1667,7 +1734,7 @@
         footerFonts: noteFonts(root),
         logo: logoInfo(logo),
         customer: customer,
-        moneyFits: measureMoneyFit(root, root.querySelector(".slip-shell") || root.querySelector(".slip-body") || root)
+        moneyFits: measureMoneyFit(root)
       };
     }
   };

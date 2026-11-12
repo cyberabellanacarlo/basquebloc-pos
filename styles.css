@@ -267,6 +267,7 @@ img { max-width: 100%; border: 0; }
 #cash-pad .received-row, #cash-pad .change-row { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
 #tender-display, #change-display { font-size: 22px; font-weight: 800; white-space: nowrap; overflow: visible; min-width: 0; }
 #change-display.short { color: var(--danger); }
+.quick-cash-lbl { margin-top: 14px; }
 #quick-cash { display: flex; flex-wrap: wrap; gap: 8px; }
 #keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 8px; }
 .key { background: var(--card); border-color: var(--line); color: var(--text); font-size: 22px; font-weight: 700; letter-spacing: 0; text-transform: none; min-height: 56px; border-radius: 14px; }
@@ -336,6 +337,7 @@ body.receipt-open #topbar { display: none; }
   font-weight: 800; font-size: 40px; color: var(--slip-gold); margin: 2px 0; letter-spacing: 0.02em; line-height: 1.15;
 }
 .slip-total { align-items: baseline; flex-wrap: nowrap; }
+#receipt-total, .slip-total > .slip-amt { min-width: 0; letter-spacing: 0; }
 .slip-total.is-wrapped,
 .slip-row.is-wrapped,
 .total-row.is-wrapped,
