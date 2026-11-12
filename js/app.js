@@ -118,19 +118,78 @@
     chrome.scrollLeft = 0;
   }
 
-  /* Show customer: aim for ~85% of the viewport width, cap at ~90% of the height, never clip.
-     If the designed 520px slip is too tall/narrow to hit that width, widen it first so type can still scale uniformly. */
+  function resetCustomerSlipStyles(shell) {
+    shell.style.transform = "none";
+    shell.style.margin = "0";
+    shell.style.width = "";
+    shell.style.height = "";
+    shell.style.maxHeight = "";
+    shell.style.overflow = "";
+    shell.style.flexShrink = "0";
+    shell.classList.remove("is-scrollable");
+    var body = shell.querySelector(".slip-body");
+    if (body) {
+      body.style.padding = "";
+      body.style.lineHeight = "";
+      body.scrollTop = 0;
+    }
+    var thanks = shell.querySelector(".slip-thanks");
+    if (thanks) thanks.style.margin = "";
+  }
+
+  function tightenCustomerSlip(shell) {
+    var body = shell.querySelector(".slip-body");
+    if (body) {
+      body.style.padding = "12px 20px 12px";
+      body.style.lineHeight = "1.25";
+    }
+    var thanks = shell.querySelector(".slip-thanks");
+    if (thanks) thanks.style.margin = "10px 0 6px";
+  }
+
+  /* Widen the unscaled slip so scaling it to targetW can also fit in targetH, avoiding scroll when possible. */
+  function widenCustomerSlipToFitHeight(shell, targetW, targetH, availW) {
+    var w = shell.offsetWidth;
+    var h = shell.offsetHeight;
+    if (!w || !h) return;
+    if (h * (targetW / w) <= targetH) return;
+    if (w >= availW) return;
+    var lo = w, hi = availW, i;
+    for (i = 0; i < 12; i++) {
+      var mid = (lo + hi) / 2;
+      shell.style.width = mid + "px";
+      w = shell.offsetWidth;
+      h = shell.offsetHeight;
+      if (!w || !h) break;
+      if (h * (targetW / w) > targetH) lo = mid;
+      else hi = mid;
+    }
+    shell.style.width = Math.ceil(hi) + "px";
+  }
+
+  function capCustomerSlipHeight(shell, maxUnscaledH) {
+    var h = shell.offsetHeight;
+    if (h <= maxUnscaledH + 0.5) return false;
+    shell.style.height = maxUnscaledH + "px";
+    shell.style.maxHeight = maxUnscaledH + "px";
+    shell.classList.add("is-scrollable");
+    return true;
+  }
+
+  /* Show customer: always land at ~85% of the viewport width, cap at ~90% of the height, never clip.
+     Widen the designed 520px slip first when that lets the whole receipt fit. Otherwise tighten
+     spacing a little, then scroll inside the slip so width stays at 85%. */
   function fitCustomerSlip() {
     var chrome = $("customer-stage");
     if (!chrome) return;
     var shell = chrome.querySelector(".slip-shell");
     if (!shell) return;
-    shell.style.transform = "none";
-    shell.style.margin = "0";
-    shell.style.width = "";
+    resetCustomerSlipStyles(shell);
     var pad = 8;
-    var availW = chrome.clientWidth - pad;
-    var availH = chrome.clientHeight - pad;
+    /* Use the stage content box, not clientWidth, so 16px stage padding is not treated as free space. */
+    var cs = getComputedStyle(chrome);
+    var availW = chrome.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight) - pad;
+    var availH = chrome.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom) - pad;
     if (availW <= 8 || availH <= 8) return;
     var targetW = Math.min(window.innerWidth * 0.85, availW);
     var targetH = Math.min(window.innerHeight * 0.90, availH);
@@ -138,34 +197,51 @@
 
     var designW = Math.min(520, targetW);
     shell.style.width = designW + "px";
+    if (!shell.offsetWidth || !shell.offsetHeight) return;
+
+    widenCustomerSlipToFitHeight(shell, targetW, targetH, availW);
+
     var w = shell.offsetWidth;
     var h = shell.offsetHeight;
     if (!w || !h) return;
 
-    var need = targetW / targetH;
-    /* May widen up to the stage, not just the 85% target, so a later height cap can still land near 85% width. */
-    if (w / h < need && w < availW) {
-      var lo = w, hi = availW, i;
-      for (i = 0; i < 10; i++) {
-        var mid = (lo + hi) / 2;
-        shell.style.width = mid + "px";
-        w = shell.offsetWidth;
-        h = shell.offsetHeight;
-        if (!w || !h) break;
-        if (w / h < need) lo = mid;
-        else hi = mid;
-      }
-      shell.style.width = Math.ceil(hi) + "px";
+    var scale = targetW / w;
+    if (!(scale > 0)) return;
+
+    if (h * scale > targetH) {
+      tightenCustomerSlip(shell);
+      widenCustomerSlipToFitHeight(shell, targetW, targetH, availW);
       w = shell.offsetWidth;
       h = shell.offsetHeight;
       if (!w || !h) return;
+      scale = targetW / w;
+      if (!(scale > 0)) return;
     }
 
-    var scale = Math.min(targetW / w, targetH / h, availW / w, availH / h);
-    if (!(scale > 0)) return;
+    if (h * scale > targetH) {
+      capCustomerSlipHeight(shell, targetH / scale);
+      w = shell.offsetWidth;
+      h = shell.offsetHeight;
+      if (!w || !h) return;
+      scale = targetW / w;
+      if (!(scale > 0)) return;
+    }
+
     applyCenteredScale(shell, w, h, scale);
     chrome.scrollTop = 0;
     chrome.scrollLeft = 0;
+  }
+
+  function scheduleCustomerFit() {
+    var tries = 0;
+    function go() {
+      if (!state.customerOpen) return;
+      fitCustomerSlip();
+      tries += 1;
+      if (tries < 3) setTimeout(go, 50);
+    }
+    go();
+    requestAnimationFrame(function () { requestAnimationFrame(go); });
   }
 
   function fitSlip() {
@@ -197,9 +273,12 @@
     state.customerOpen = true;
     receipt.render(state.currentSale, state.settings, $("customer-mount"));
     $("customer-overlay").classList.remove("hidden");
-    setTimeout(function () {
-      fitCustomerSlip();
-    }, 30);
+    $("customer-overlay").offsetHeight;
+    scheduleCustomerFit();
+    var logo = $("customer-mount").querySelector(".slip-logo");
+    if (logo && !logo.complete) {
+      logo.addEventListener("load", function () { if (state.customerOpen) scheduleCustomerFit(); }, { once: true });
+    }
     tryFullscreen($("customer-overlay"));
   }
 
@@ -1015,7 +1094,10 @@
       e.stopPropagation();
       closeCustomerView();
     });
-    $("customer-stage").addEventListener("click", function () { closeCustomerView(); });
+    $("customer-stage").addEventListener("click", function (e) {
+      if (e.target && e.target.closest && e.target.closest(".slip-shell")) return;
+      closeCustomerView();
+    });
     document.addEventListener("keydown", function (e) {
       if (e.key === "Escape" && state.customerOpen) closeCustomerView();
     });
@@ -1168,6 +1250,27 @@
         var stageR = stage.getBoundingClientRect();
         var overR = overlay.getBoundingClientRect();
         var eps = 2;
+        var body = customerShell.querySelector(".slip-body");
+        var bodyCanScroll = !!(body && body.scrollHeight > body.clientHeight + 2);
+        var cut = [];
+        Array.prototype.forEach.call(customerShell.querySelectorAll("div, span, img"), function (el) {
+          var r = el.getBoundingClientRect();
+          if (r.width < 1 || r.height < 1) return;
+          var clipEl = el.closest(".slip-body") || customerShell;
+          var cr = clipEl.getBoundingClientRect();
+          var inScroll = clipEl === body && bodyCanScroll;
+          var visible = r.bottom > cr.top + 1 && r.top < cr.bottom - 1;
+          if (!visible && inScroll) return;
+          if (r.left < cr.left - 2 || r.right > cr.right + 2) {
+            cut.push({ type: "x", text: (el.textContent || "").trim().slice(0, 40) });
+          }
+          if (!inScroll && (r.top < slipR.top - 2 || r.bottom > slipR.bottom + 2)) {
+            cut.push({ type: "y", text: (el.textContent || "").trim().slice(0, 40) });
+          }
+        });
+        var custItem = customerRoot.querySelector(".slip-item");
+        var custAmt = customerRoot.querySelector(".slip-amt");
+        var custTotal = customerRoot.querySelector(".slip-total") || customerRoot.querySelector("#receipt-total");
         customer = {
           viewportW: window.innerWidth,
           viewportH: window.innerHeight,
@@ -1178,6 +1281,14 @@
           fitsWidth: slipR.width <= window.innerWidth + eps,
           clippedByStage: !(slipR.top >= stageR.top - eps && slipR.bottom <= stageR.bottom + eps && slipR.left >= stageR.left - eps && slipR.right <= stageR.right + eps),
           clippedByOverlay: !(slipR.top >= overR.top - eps && slipR.bottom <= overR.bottom + eps && slipR.left >= overR.left - eps && slipR.right <= overR.right + eps),
+          canScroll: bodyCanScroll,
+          bodyScrollHeight: body ? body.scrollHeight : 0,
+          bodyClientHeight: body ? body.clientHeight : 0,
+          cutText: cut,
+          itemFontPx: px(custItem, "fontSize"),
+          amtFontPx: px(custAmt, "fontSize"),
+          totalFontPx: px(custTotal, "fontSize"),
+          totalColor: custTotal ? getComputedStyle(custTotal).color : "",
           footerFonts: noteFonts(customerRoot),
           logo: logoInfo(customerRoot.querySelector(".slip-logo"))
         };

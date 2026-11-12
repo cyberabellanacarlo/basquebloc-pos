@@ -10,8 +10,21 @@ const VIEWPORTS = [
   { id: "phone_land", width: 844, height: 390 },
   { id: "android_tab_port", width: 800, height: 1280 },
   { id: "android_tab_land", width: 1280, height: 800 },
+  { id: "ipad_mini_port", width: 768, height: 1024 },
+  { id: "ipad_mini_land", width: 1024, height: 768 },
   { id: "ipad13_port", width: 1024, height: 1366 },
   { id: "ipad13_land", width: 1366, height: 1024 }
+];
+
+/* Sizes Ric asked to re-check for Show customer at ~85% width and <=90% height. */
+const CUSTOMER_VIEWPORTS = [
+  { id: "phone_port", width: 390, height: 844 },
+  { id: "ipad_mini_land", width: 1024, height: 768 },
+  { id: "ipad_mini_port", width: 768, height: 1024 },
+  { id: "android_tab_land", width: 1280, height: 800 },
+  { id: "android_tab_port", width: 800, height: 1280 },
+  { id: "ipad13_land", width: 1366, height: 1024 },
+  { id: "ipad13_port", width: 1024, height: 1366 }
 ];
 
 async function ready(page) {
@@ -30,6 +43,9 @@ async function seedPrices(page) {
 test.describe.configure({ mode: "serial" });
 
 test("full cash checkout, receipt, history, reload, offline", async ({ page, context, browser }) => {
+  const consoleErrors = [];
+  page.on("pageerror", (err) => consoleErrors.push(String(err)));
+  page.on("console", (msg) => { if (msg.type() === "error") consoleErrors.push(msg.text()); });
   await page.setViewportSize({ width: 1280, height: 800 });
   await page.goto("/?qa=1");
   await ready(page);
@@ -86,9 +102,9 @@ test("full cash checkout, receipt, history, reload, offline", async ({ page, con
   for (const n of measured.footerFonts) {
     expect(n.fontPx, n.text).toBeGreaterThanOrEqual(14);
   }
-  require("fs").mkdirSync(require("path").join(__dirname, "..", "shots", "receipt_v3"), { recursive: true });
+  require("fs").mkdirSync(require("path").join(__dirname, "..", "shots", "receipt_v4"), { recursive: true });
   require("fs").writeFileSync(
-    require("path").join(__dirname, "..", "shots", "receipt_v3", "measured.json"),
+    require("path").join(__dirname, "..", "shots", "receipt_v4", "measured.json"),
     JSON.stringify(measured, null, 2)
   );
 
@@ -105,9 +121,23 @@ test("full cash checkout, receipt, history, reload, offline", async ({ page, con
   await expect(page.locator("#orders-list")).toContainText("Anna");
   await expect(page.locator("#orders-list")).toContainText("Ready · Call");
 
+  await page.evaluate(() => {
+    window.__bbposSpoken = [];
+    const synth = window.speechSynthesis;
+    if (synth && !synth.__bbposWrapped) {
+      const orig = synth.speak.bind(synth);
+      synth.speak = function (u) {
+        window.__bbposSpoken.push(u && u.text);
+        return orig(u);
+      };
+      synth.__bbposWrapped = true;
+    }
+  });
   await page.locator(".order-card .gold-btn").click();
   await expect(page.locator("#orders-list")).toContainText("Called 1");
   await expect(page.locator("#orders-list")).toContainText("Again");
+  const spoken = await page.evaluate(() => window.__bbposSpoken || []);
+  expect(spoken.join(" ")).toContain("Order 1, Anna, your order is ready!");
 
   /* Reload persistence (same origin, IndexedDB) */
   await page.reload();
@@ -137,6 +167,39 @@ test("full cash checkout, receipt, history, reload, offline", async ({ page, con
   await expect(offlinePage.locator("#nav-counter")).toBeVisible();
   await context.setOffline(false);
   await offlinePage.close();
+  expect(consoleErrors, "console errors during checkout").toEqual([]);
+});
+
+test("cash ₱200 on ₱150 gives ₱50 change and history reopens the receipt", async ({ page }) => {
+  const consoleErrors = [];
+  page.on("pageerror", (err) => consoleErrors.push(String(err)));
+  page.on("console", (msg) => { if (msg.type() === "error") consoleErrors.push(msg.text()); });
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.goto("/?qa=1");
+  await ready(page);
+  await seedPrices(page);
+  await page.evaluate(async () => {
+    window.__bbposQA.state().cart = [];
+    window.__bbposQA.addByName("Classic Slice");
+    window.__bbposQA.setName("Mia");
+    window.__bbposQA.openPay();
+    window.__bbposQA.setTender("200");
+    await window.__bbposQA.confirmPay();
+  });
+  await expect(page.locator("#view-receipt")).toBeVisible();
+  await expect(page.locator("#receipt-total")).toHaveText("₱150.00");
+  await expect(page.locator(".slip-change")).toContainText("₱50.00");
+  const orderNo = await page.locator(".slip-ord-no").innerText();
+  await page.evaluate(() => window.__bbposQA.go("history"));
+  await expect(page.locator("#view-history")).toBeVisible();
+  await expect(page.locator("#history-list")).toContainText("Mia");
+  await page.locator(".hist-card", { hasText: "Mia" }).first().click();
+  await expect(page.locator("#view-receipt")).toBeVisible();
+  await expect(page.locator(".slip-ord-no")).toHaveText(orderNo);
+  await expect(page.locator(".slip-cust")).toHaveText("Mia");
+  await expect(page.locator("#receipt-total")).toHaveText("₱150.00");
+  await expect(page.locator(".slip-change")).toContainText("₱50.00");
+  expect(consoleErrors, "console errors during ₱50 change sale").toEqual([]);
 });
 
 test("screenshots at phone, Android tablet, and 13-inch iPad sizes", async ({ page }) => {
@@ -211,7 +274,7 @@ test("screenshots at phone, Android tablet, and 13-inch iPad sizes", async ({ pa
 });
 
 test("receipt typography, torn edges, and Show customer at every size", async ({ page }) => {
-  const recDir = path.join(SHOTS, "receipt_v3");
+  const recDir = path.join(SHOTS, "receipt_v4");
   fs.mkdirSync(recDir, { recursive: true });
 
   await page.setViewportSize({ width: 1280, height: 800 });
@@ -296,19 +359,13 @@ test("receipt typography, torn edges, and Show customer at every size", async ({
     expect(cust.customer.fitsWidth, vp.id + " fits width").toBeTruthy();
     expect(cust.customer.clippedByStage, vp.id + " clipped by stage").toBeFalsy();
     expect(cust.customer.clippedByOverlay, vp.id + " clipped by overlay").toBeFalsy();
-    /* Tall screens can reach ~90% height; short landscape is limited by the Close button. */
-    if (vp.height >= 800) {
-      expect(cust.customer.heightRatio, vp.id + " height ratio").toBeGreaterThanOrEqual(0.80);
-      expect(cust.customer.heightRatio, vp.id + " height ratio upper").toBeLessThanOrEqual(0.96);
-    } else {
-      expect(cust.customer.heightRatio, vp.id + " short height ratio").toBeGreaterThanOrEqual(0.60);
-    }
-    /* iPad portrait: grow to about 85% of the viewport width, still within ~90% height. */
-    if (vp.height > vp.width && vp.width >= 1000 && vp.width <= 1100) {
-      expect(cust.customer.widthRatio, vp.id + " ipad port width ratio").toBeGreaterThanOrEqual(0.80);
-      expect(cust.customer.widthRatio, vp.id + " ipad port width ratio upper").toBeLessThanOrEqual(0.90);
-      expect(cust.customer.heightRatio, vp.id + " ipad port height cap").toBeLessThanOrEqual(0.92);
-    }
+    expect(cust.customer.heightRatio, vp.id + " height cap").toBeLessThanOrEqual(0.90);
+    expect(cust.customer.widthRatio, vp.id + " width ratio").toBeGreaterThanOrEqual(0.83);
+    expect(cust.customer.widthRatio, vp.id + " width ratio upper").toBeLessThanOrEqual(0.87);
+    expect(cust.customer.cutText || [], vp.id + " cut text").toEqual([]);
+    if (cust.customer.itemFontPx) expect(cust.customer.itemFontPx, vp.id + " item font").toBeGreaterThanOrEqual(20);
+    if (cust.customer.amtFontPx) expect(cust.customer.amtFontPx, vp.id + " amt font").toBeGreaterThanOrEqual(20);
+    if (cust.customer.totalFontPx) expect(cust.customer.totalFontPx, vp.id + " total font").toBeGreaterThanOrEqual(40);
     for (const n of cust.customer.footerFonts) {
       expect(n.fontPx, vp.id + " " + n.text).toBeGreaterThanOrEqual(14);
     }
@@ -340,10 +397,9 @@ test("receipt typography, torn edges, and Show customer at every size", async ({
     const cust = await page.evaluate(() => window.__bbposQA.measureReceipt());
     expect(cust.customer.clippedByStage).toBeFalsy();
     expect(cust.customer.clippedByOverlay).toBeFalsy();
-    expect(cust.customer.widthRatio, "1032 width ratio").toBeGreaterThanOrEqual(0.80);
-    expect(cust.customer.widthRatio, "1032 width ratio upper").toBeLessThanOrEqual(0.90);
-    expect(cust.customer.heightRatio, "1032 height cap").toBeLessThanOrEqual(0.92);
-    expect(cust.customer.heightRatio, "1032 height ratio").toBeGreaterThanOrEqual(0.80);
+    expect(cust.customer.widthRatio, "1032 width ratio").toBeGreaterThanOrEqual(0.83);
+    expect(cust.customer.widthRatio, "1032 width ratio upper").toBeLessThanOrEqual(0.87);
+    expect(cust.customer.heightRatio, "1032 height cap").toBeLessThanOrEqual(0.90);
     reports.push({ viewport: vp, customer: cust.customer });
     await page.locator("#btn-customer-close").click();
   }
@@ -368,37 +424,79 @@ test("receipt typography, torn edges, and Show customer at every size", async ({
   }
   await page.evaluate(() => { document.documentElement.style.zoom = ""; });
 
-  /* Long 8-item order must scale down or scroll, never clip. */
-  await page.setViewportSize({ width: 1024, height: 1366 });
-  await page.evaluate(async () => {
-    const names = window.__bbposQA.state().menu.items.map((i) => i.name);
-    window.__bbposQA.state().cart = [];
-    names.slice(0, 8).forEach((n) => window.__bbposQA.addByName(n));
-    window.__bbposQA.setName("Long Order");
-    window.__bbposQA.openPay();
-    window.__bbposQA.setTender("20000");
-    await window.__bbposQA.confirmPay();
-  });
-  await expect(page.locator("#view-receipt")).toBeVisible();
-  await page.waitForTimeout(160);
-  await page.screenshot({ path: path.join(recDir, "ipad13_port_staff_long.png"), fullPage: false });
-  await page.evaluate(() => {
-    const el = document.getElementById("customer-overlay");
-    el.requestFullscreen = undefined;
-    el.webkitRequestFullscreen = undefined;
-  });
-  await page.locator("#btn-show-customer").click();
-  await expect(page.locator("#customer-overlay")).toBeVisible();
-  await page.waitForTimeout(160);
-  await page.screenshot({ path: path.join(recDir, "ipad13_port_customer_long.png"), fullPage: false });
-  const longM = await page.evaluate(() => window.__bbposQA.measureReceipt());
-  expect(longM.customer.clippedByStage, "long order clipped by stage").toBeFalsy();
-  expect(longM.customer.clippedByOverlay, "long order clipped by overlay").toBeFalsy();
-  expect(longM.customer.fitsWidth, "long order fits width").toBeTruthy();
-  expect(longM.customer.widthRatio, "long order width ratio").toBeGreaterThanOrEqual(0.80);
-  expect(longM.customer.widthRatio, "long order width ratio upper").toBeLessThanOrEqual(0.90);
-  expect(longM.customer.heightRatio, "long order height cap").toBeLessThanOrEqual(0.92);
-  reports.push({ viewport: { id: "ipad13_port_long", width: 1024, height: 1366 }, customer: longM.customer });
+  /* 1-item and 8-item Show customer at every size Ric asked to re-check. */
+  async function checkoutCart(itemCount, customerName, tender) {
+    await page.evaluate(async ({ itemCount, customerName, tender }) => {
+      const names = window.__bbposQA.state().menu.items.map((i) => i.name);
+      if (itemCount === 1) {
+        window.__bbposQA.state().cart = [];
+        window.__bbposQA.addByName("Classic Slice");
+      } else {
+        if (names.length < itemCount) throw new Error("menu has only " + names.length + " items");
+        window.__bbposQA.state().cart = [];
+        names.slice(0, itemCount).forEach((n) => window.__bbposQA.addByName(n));
+      }
+      window.__bbposQA.setName(customerName);
+      window.__bbposQA.openPay();
+      window.__bbposQA.setTender(String(tender));
+      await window.__bbposQA.confirmPay();
+    }, { itemCount, customerName, tender });
+    await expect(page.locator("#view-receipt")).toBeVisible();
+    await page.evaluate(() => {
+      const el = document.getElementById("customer-overlay");
+      el.requestFullscreen = undefined;
+      el.webkitRequestFullscreen = undefined;
+    });
+  }
 
+  const sizeReports = [];
+  for (const count of [1, 8]) {
+    const who = count === 1 ? "One Item" : "Long Order";
+    const tender = count === 1 ? "200" : "20000";
+    await page.evaluate(() => window.__bbposQA.closeCustomer());
+    await checkoutCart(count, who, tender);
+    if (count === 1) {
+      await expect(page.locator("#receipt-total")).toHaveText("₱150.00");
+      await expect(page.locator(".slip-change")).toContainText("₱50.00");
+    }
+    await page.waitForTimeout(120);
+    if (count === 8) {
+      await page.screenshot({ path: path.join(recDir, "ipad13_port_staff_long.png"), fullPage: false });
+    }
+    for (const vp of CUSTOMER_VIEWPORTS) {
+      await page.setViewportSize({ width: vp.width, height: vp.height });
+      await page.evaluate(() => window.__bbposQA.closeCustomer());
+      await page.evaluate(() => window.__bbposQA.openReceipt(window.__bbposQA.lastSale(), false));
+      await page.waitForTimeout(120);
+      await page.locator("#btn-show-customer").click();
+      await expect(page.locator("#customer-overlay")).toBeVisible();
+      await page.waitForFunction(() => {
+        const img = document.querySelector("#customer-mount .slip-logo");
+        return img && img.complete && img.naturalWidth > 0;
+      });
+      await page.waitForTimeout(160);
+      const tag = vp.id + "_" + count + "item";
+      await page.screenshot({ path: path.join(recDir, tag + "_customer.png"), fullPage: false });
+      const measured = await page.evaluate(() => window.__bbposQA.measureReceipt());
+      const c = measured.customer;
+      expect(c, tag + " measurements").toBeTruthy();
+      expect(c.clippedByStage, tag + " clipped by stage").toBeFalsy();
+      expect(c.clippedByOverlay, tag + " clipped by overlay").toBeFalsy();
+      expect(c.fitsWidth, tag + " fits width").toBeTruthy();
+      expect(c.widthRatio, tag + " width ratio").toBeGreaterThanOrEqual(0.83);
+      expect(c.widthRatio, tag + " width ratio upper").toBeLessThanOrEqual(0.87);
+      expect(c.heightRatio, tag + " height cap").toBeLessThanOrEqual(0.90);
+      expect(c.cutText || [], tag + " cut text").toEqual([]);
+      expect(c.itemFontPx, tag + " item font").toBeGreaterThanOrEqual(20);
+      expect(c.amtFontPx, tag + " amt font").toBeGreaterThanOrEqual(20);
+      expect(c.totalFontPx, tag + " total font").toBeGreaterThanOrEqual(40);
+      expect(c.totalColor, tag + " total color").toBe("rgb(138, 100, 32)");
+      sizeReports.push({ viewport: { ...vp, items: count }, customer: c });
+      await page.locator("#btn-customer-close").click();
+      await expect(page.locator("#customer-overlay")).toBeHidden();
+    }
+  }
+  reports.push(...sizeReports);
   fs.writeFileSync(path.join(recDir, "customer_measured.json"), JSON.stringify(reports, null, 2));
+  fs.writeFileSync(path.join(recDir, "size_matrix.json"), JSON.stringify(sizeReports, null, 2));
 });
