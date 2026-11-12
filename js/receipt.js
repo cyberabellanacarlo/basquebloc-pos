@@ -45,6 +45,8 @@
     mount.innerHTML =
       '<div class="slip-shell" id="receipt-slip">' +
         '<img class="slip-tear slip-tear-top" src="assets/slip-tear-top.svg" alt="">' +
+        '<div class="slip-scroll-wrap">' +
+        '<div class="slip-scroll">' +
         '<article class="slip-body">' +
         '<img class="slip-logo" src="assets/receipt_logo.png" alt="The Basque Bloc">' +
         '<div class="slip-brand">BASQUE BLOC</div>' +
@@ -69,6 +71,12 @@
         (facebook ? '<div class="slip-care">' + esc(facebook) + '</div>' : '') +
         (notOfficial ? '<div class="slip-official">This is not an official receipt.</div>' : '') +
         '</article>' +
+        '</div>' +
+        '<div class="slip-more" hidden aria-hidden="true">' +
+          '<span class="slip-more-fade"></span>' +
+          '<span class="slip-more-hint">\u2193 more</span>' +
+        '</div>' +
+        '</div>' +
         '<img class="slip-tear slip-tear-bottom" src="assets/slip-tear-bottom.svg" alt="">' +
       '</div>';
   }

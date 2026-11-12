@@ -357,13 +357,66 @@ body.receipt-open #topbar { display: none; }
 }
 #customer-mount { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
 #customer-mount .slip-shell { width: min(520px, 100%); flex-shrink: 0; }
+.slip-scroll-wrap {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: #fffaf2;
+}
+.slip-scroll { min-height: 0; }
+.slip-more {
+  display: none;
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 48px;
+  pointer-events: none;
+  z-index: 2;
+}
+.slip-shell.has-more .slip-more { display: block; }
+.slip-more-fade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, rgba(255, 250, 242, 0), #fffaf2 72%);
+}
+.slip-more-hint {
+  position: absolute;
+  left: 50%;
+  bottom: 4px;
+  transform: translateX(-50%);
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--slip-gold);
+  background: #fffaf2;
+  padding: 2px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+  line-height: 1.2;
+}
 #customer-mount .slip-shell.is-scrollable { overflow: hidden; }
-#customer-mount .slip-shell.is-scrollable .slip-body {
+#customer-mount .slip-shell.is-scrollable .slip-scroll-wrap {
   flex: 1 1 auto;
   min-height: 0;
+  padding-top: 12px;
+  padding-bottom: 12px;
+  overflow: hidden;
+}
+#customer-mount .slip-shell.is-scrollable.has-more .slip-more { bottom: 12px; }
+#customer-mount .slip-shell.is-scrollable .slip-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
+  isolation: isolate;
+  contain: paint;
+  /* Local paint box so a scaled shell cannot leak glyphs under the zigzags. */
+  clip-path: inset(0);
 }
 #btn-customer-close {
   flex: 0 0 auto; align-self: center;

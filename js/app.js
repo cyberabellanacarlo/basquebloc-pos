@@ -127,14 +127,42 @@
     shell.style.overflow = "";
     shell.style.flexShrink = "0";
     shell.classList.remove("is-scrollable");
+    shell.classList.remove("has-more");
     var body = shell.querySelector(".slip-body");
     if (body) {
       body.style.padding = "";
       body.style.lineHeight = "";
       body.scrollTop = 0;
     }
+    var sc = shell.querySelector(".slip-scroll");
+    if (sc) sc.scrollTop = 0;
+    var more = shell.querySelector(".slip-more");
+    if (more) {
+      more.hidden = true;
+      more.setAttribute("aria-hidden", "true");
+    }
     var thanks = shell.querySelector(".slip-thanks");
     if (thanks) thanks.style.margin = "";
+  }
+
+  function updateMoreHint(shell) {
+    if (!shell) return;
+    var sc = shell.querySelector(".slip-scroll");
+    var more = shell.querySelector(".slip-more");
+    if (!sc || !more) return;
+    var overflow = sc.scrollHeight > sc.clientHeight + 1;
+    var atBottom = sc.scrollTop + sc.clientHeight >= sc.scrollHeight - 2;
+    var show = overflow && !atBottom;
+    more.hidden = !show;
+    more.setAttribute("aria-hidden", show ? "false" : "true");
+    shell.classList.toggle("has-more", show);
+  }
+
+  function bindMoreHint(shell) {
+    var sc = shell.querySelector(".slip-scroll");
+    if (!sc || sc.getAttribute("data-bbpos-more") === "1") return;
+    sc.setAttribute("data-bbpos-more", "1");
+    sc.addEventListener("scroll", function () { updateMoreHint(shell); }, { passive: true });
   }
 
   function tightenCustomerSlip(shell) {
@@ -228,6 +256,8 @@
     }
 
     applyCenteredScale(shell, w, h, scale);
+    bindMoreHint(shell);
+    updateMoreHint(shell);
     chrome.scrollTop = 0;
     chrome.scrollLeft = 0;
   }
@@ -1251,14 +1281,16 @@
         var overR = overlay.getBoundingClientRect();
         var eps = 2;
         var body = customerShell.querySelector(".slip-body");
-        var bodyCanScroll = !!(body && body.scrollHeight > body.clientHeight + 2);
+        var scroll = customerShell.querySelector(".slip-scroll") || body;
+        var bodyCanScroll = !!(scroll && scroll.scrollHeight > scroll.clientHeight + 2);
         var cut = [];
         Array.prototype.forEach.call(customerShell.querySelectorAll("div, span, img"), function (el) {
+          if (el.classList && (el.classList.contains("slip-more") || el.classList.contains("slip-more-fade") || el.classList.contains("slip-more-hint") || el.classList.contains("slip-tear"))) return;
           var r = el.getBoundingClientRect();
           if (r.width < 1 || r.height < 1) return;
-          var clipEl = el.closest(".slip-body") || customerShell;
+          var clipEl = el.closest(".slip-scroll") || el.closest(".slip-body") || customerShell;
           var cr = clipEl.getBoundingClientRect();
-          var inScroll = clipEl === body && bodyCanScroll;
+          var inScroll = (clipEl === scroll || clipEl === body) && bodyCanScroll;
           var visible = r.bottom > cr.top + 1 && r.top < cr.bottom - 1;
           if (!visible && inScroll) return;
           if (r.left < cr.left - 2 || r.right > cr.right + 2) {
@@ -1268,6 +1300,88 @@
             cut.push({ type: "y", text: (el.textContent || "").trim().slice(0, 40) });
           }
         });
+        function overlap(a, b, pad) {
+          pad = pad || 0;
+          return a.left < b.right - pad && a.right > b.left + pad && a.top < b.bottom - pad && a.bottom > b.top + pad;
+        }
+        function clipRect(r, port) {
+          return {
+            left: Math.max(r.left, port.left),
+            top: Math.max(r.top, port.top),
+            right: Math.min(r.right, port.right),
+            bottom: Math.min(r.bottom, port.bottom)
+          };
+        }
+        function currentScale() {
+          var tr = getComputedStyle(customerShell).transform;
+          if (!tr || tr === "none") return 1;
+          var m = tr.match(/matrix\(([^,]+)/);
+          if (m) return Math.abs(parseFloat(m[1])) || 1;
+          return 1;
+        }
+        function hintVisible(el) {
+          if (!el || el.hidden) return false;
+          var cs = getComputedStyle(el);
+          if (cs.display === "none" || cs.visibility === "hidden" || parseFloat(cs.opacity || "1") === 0) return false;
+          var r = el.getBoundingClientRect();
+          return r.width > 0 && r.height > 0;
+        }
+        function safetyAt(scrollTop) {
+          if (scroll) scroll.scrollTop = scrollTop;
+          updateMoreHint(customerShell);
+          var topZ = customerShell.querySelector(".slip-tear-top");
+          var botZ = customerShell.querySelector(".slip-tear-bottom");
+          var more = customerShell.querySelector(".slip-more");
+          var topR = topZ ? topZ.getBoundingClientRect() : { left: 0, top: 0, right: 0, bottom: 0 };
+          var botR = botZ ? botZ.getBoundingClientRect() : { left: 0, top: 0, right: 0, bottom: 0 };
+          var port = scroll ? scroll.getBoundingClientRect() : slipR;
+          var hits = [];
+          var lastBottom = 0;
+          var lastText = "";
+          var nodes = customerShell.querySelectorAll(".slip-logo, .slip-brand, .slip-tagline, .slip-city, .slip-ord-label, .slip-ord-no, .slip-cust, .slip-row, .slip-thanks, .slip-note, .slip-care, .slip-official");
+          Array.prototype.forEach.call(nodes, function (el) {
+            var r = el.getBoundingClientRect();
+            if (r.width < 0.5 || r.height < 0.5) return;
+            var c = clipRect(r, port);
+            if (c.right - c.left < 0.5 || c.bottom - c.top < 0.5) return;
+            if ((topZ && overlap(c, topR, 0.5)) || (botZ && overlap(c, botR, 0.5))) {
+              hits.push({
+                text: (el.textContent || el.getAttribute("alt") || "").trim().slice(0, 40),
+                top: +c.top.toFixed(2),
+                bottom: +c.bottom.toFixed(2),
+                zigzag: (topZ && overlap(c, topR, 0.5)) ? "top" : "bottom"
+              });
+            }
+            if (c.bottom > lastBottom) {
+              lastBottom = c.bottom;
+              lastText = (el.textContent || "").trim().slice(0, 40);
+            }
+          });
+          var scale = currentScale();
+          var zoom = parseFloat(document.documentElement.style.zoom || "1") || 1;
+          var gapPx = botZ ? (botR.top - lastBottom) : 0;
+          var gapCss = scale * zoom ? (gapPx / (scale * zoom)) : gapPx;
+          var overflow = !!(scroll && scroll.scrollHeight > scroll.clientHeight + 1);
+          var atBottom = !scroll || (scroll.scrollTop + scroll.clientHeight >= scroll.scrollHeight - 2);
+          return {
+            scrollTop: scroll ? scroll.scrollTop : 0,
+            overflow: overflow,
+            atBottom: atBottom,
+            hintShown: hintVisible(more),
+            hits: hits,
+            lastText: lastText,
+            lastLineGapPx: +gapPx.toFixed(2),
+            lastLineGapCss: +gapCss.toFixed(2),
+            scale: +scale.toFixed(4),
+            zoom: zoom
+          };
+        }
+        var savedScroll = scroll ? scroll.scrollTop : 0;
+        var zigzagAt0 = safetyAt(0);
+        var maxScroll = scroll ? Math.max(0, scroll.scrollHeight - scroll.clientHeight) : 0;
+        var zigzagAtMax = safetyAt(maxScroll);
+        if (scroll) scroll.scrollTop = savedScroll;
+        updateMoreHint(customerShell);
         var custItem = customerRoot.querySelector(".slip-item");
         var custAmt = customerRoot.querySelector(".slip-amt");
         var custTotal = customerRoot.querySelector(".slip-total") || customerRoot.querySelector("#receipt-total");
@@ -1282,9 +1396,10 @@
           clippedByStage: !(slipR.top >= stageR.top - eps && slipR.bottom <= stageR.bottom + eps && slipR.left >= stageR.left - eps && slipR.right <= stageR.right + eps),
           clippedByOverlay: !(slipR.top >= overR.top - eps && slipR.bottom <= overR.bottom + eps && slipR.left >= overR.left - eps && slipR.right <= overR.right + eps),
           canScroll: bodyCanScroll,
-          bodyScrollHeight: body ? body.scrollHeight : 0,
-          bodyClientHeight: body ? body.clientHeight : 0,
+          bodyScrollHeight: scroll ? scroll.scrollHeight : 0,
+          bodyClientHeight: scroll ? scroll.clientHeight : 0,
           cutText: cut,
+          zigzag: { at0: zigzagAt0, atMax: zigzagAtMax },
           itemFontPx: px(custItem, "fontSize"),
           amtFontPx: px(custAmt, "fontSize"),
           totalFontPx: px(custTotal, "fontSize"),

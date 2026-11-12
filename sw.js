@@ -1,5 +1,5 @@
 /* Versioned cache. Sales and the menu live in IndexedDB and are never stored or cleared here. */
-var CACHE = "bbpos-web-v4";
+var CACHE = "bbpos-web-v5";
 var SHELL = [
   "./",
   "./index.html",

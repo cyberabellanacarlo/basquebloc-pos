@@ -27,6 +27,37 @@ const CUSTOMER_VIEWPORTS = [
   { id: "ipad13_port", width: 1024, height: 1366 }
 ];
 
+
+function expectSlipSafe(customer, tag, opts) {
+  opts = opts || {};
+  expect(customer, tag + " measurements").toBeTruthy();
+  if (!opts.skipBox) {
+    expect(customer.fitsWidth, tag + " fits width").toBeTruthy();
+    expect(customer.clippedByStage, tag + " clipped by stage").toBeFalsy();
+    expect(customer.clippedByOverlay, tag + " clipped by overlay").toBeFalsy();
+    expect(customer.heightRatio, tag + " height cap").toBeLessThanOrEqual(0.90);
+    expect(customer.widthRatio, tag + " width ratio").toBeGreaterThanOrEqual(0.83);
+    expect(customer.widthRatio, tag + " width ratio upper").toBeLessThanOrEqual(0.87);
+  }
+  expect(customer.cutText || [], tag + " cut text").toEqual([]);
+  const z = customer.zigzag;
+  expect(z, tag + " zigzag metrics").toBeTruthy();
+  expect(z.at0.hits || [], tag + " zigzag overlap at top").toEqual([]);
+  expect(z.atMax.hits || [], tag + " zigzag overlap at bottom").toEqual([]);
+  expect(z.atMax.lastLineGapCss, tag + " last-line gap css px (" + (z.atMax.lastText || "") + ")").toBeGreaterThanOrEqual(11.5);
+  expect(z.at0.hintShown, tag + " hint at top").toBe(!!(z.at0.overflow && !z.at0.atBottom));
+  expect(z.atMax.hintShown, tag + " hint at bottom").toBe(false);
+}
+
+async function scrollCustomerSlip(page, toBottom) {
+  await page.evaluate((toBottom) => {
+    const sc = document.querySelector("#customer-mount .slip-scroll");
+    if (!sc) return;
+    sc.scrollTop = toBottom ? sc.scrollHeight : 0;
+  }, toBottom);
+  await page.waitForTimeout(80);
+}
+
 async function ready(page) {
   await page.waitForFunction(() => window.__bbposQA && window.__bbposQA.state().menu.items.length > 0);
 }
@@ -102,9 +133,9 @@ test("full cash checkout, receipt, history, reload, offline", async ({ page, con
   for (const n of measured.footerFonts) {
     expect(n.fontPx, n.text).toBeGreaterThanOrEqual(14);
   }
-  require("fs").mkdirSync(require("path").join(__dirname, "..", "shots", "receipt_v4"), { recursive: true });
+  require("fs").mkdirSync(require("path").join(__dirname, "..", "shots", "receipt_v5"), { recursive: true });
   require("fs").writeFileSync(
-    require("path").join(__dirname, "..", "shots", "receipt_v4", "measured.json"),
+    require("path").join(__dirname, "..", "shots", "receipt_v5", "measured.json"),
     JSON.stringify(measured, null, 2)
   );
 
@@ -274,7 +305,7 @@ test("screenshots at phone, Android tablet, and 13-inch iPad sizes", async ({ pa
 });
 
 test("receipt typography, torn edges, and Show customer at every size", async ({ page }) => {
-  const recDir = path.join(SHOTS, "receipt_v4");
+  const recDir = path.join(SHOTS, "receipt_v5");
   fs.mkdirSync(recDir, { recursive: true });
 
   await page.setViewportSize({ width: 1280, height: 800 });
@@ -355,14 +386,7 @@ test("receipt typography, torn edges, and Show customer at every size", async ({
     await page.screenshot({ path: path.join(recDir, vp.id + "_customer.png"), fullPage: false });
 
     const cust = await page.evaluate(() => window.__bbposQA.measureReceipt());
-    expect(cust.customer, "customer measurements").toBeTruthy();
-    expect(cust.customer.fitsWidth, vp.id + " fits width").toBeTruthy();
-    expect(cust.customer.clippedByStage, vp.id + " clipped by stage").toBeFalsy();
-    expect(cust.customer.clippedByOverlay, vp.id + " clipped by overlay").toBeFalsy();
-    expect(cust.customer.heightRatio, vp.id + " height cap").toBeLessThanOrEqual(0.90);
-    expect(cust.customer.widthRatio, vp.id + " width ratio").toBeGreaterThanOrEqual(0.83);
-    expect(cust.customer.widthRatio, vp.id + " width ratio upper").toBeLessThanOrEqual(0.87);
-    expect(cust.customer.cutText || [], vp.id + " cut text").toEqual([]);
+    expectSlipSafe(cust.customer, vp.id);
     if (cust.customer.itemFontPx) expect(cust.customer.itemFontPx, vp.id + " item font").toBeGreaterThanOrEqual(20);
     if (cust.customer.amtFontPx) expect(cust.customer.amtFontPx, vp.id + " amt font").toBeGreaterThanOrEqual(20);
     if (cust.customer.totalFontPx) expect(cust.customer.totalFontPx, vp.id + " total font").toBeGreaterThanOrEqual(40);
@@ -395,11 +419,7 @@ test("receipt typography, torn edges, and Show customer at every size", async ({
     await page.waitForTimeout(160);
     await page.screenshot({ path: path.join(recDir, vp.id + "_customer.png"), fullPage: false });
     const cust = await page.evaluate(() => window.__bbposQA.measureReceipt());
-    expect(cust.customer.clippedByStage).toBeFalsy();
-    expect(cust.customer.clippedByOverlay).toBeFalsy();
-    expect(cust.customer.widthRatio, "1032 width ratio").toBeGreaterThanOrEqual(0.83);
-    expect(cust.customer.widthRatio, "1032 width ratio upper").toBeLessThanOrEqual(0.87);
-    expect(cust.customer.heightRatio, "1032 height cap").toBeLessThanOrEqual(0.90);
+    expectSlipSafe(cust.customer, "1032");
     reports.push({ viewport: vp, customer: cust.customer });
     await page.locator("#btn-customer-close").click();
   }
@@ -419,6 +439,12 @@ test("receipt typography, torn edges, and Show customer at every size", async ({
     await page.screenshot({ path: path.join(recDir, "ipad13_port_customer_" + tag + ".png"), fullPage: false });
     const zoomed = await page.evaluate(() => window.__bbposQA.measureReceipt());
     expect(zoomed.customer.clippedByOverlay, tag + " clip").toBeFalsy();
+    expectSlipSafe(zoomed.customer, "ipad13_port_" + tag, { skipBox: true });
+    if (zoom === 2) {
+      await scrollCustomerSlip(page, true);
+      await page.screenshot({ path: path.join(recDir, "ipad13_port_customer_" + tag + "_bottom.png"), fullPage: false });
+      await scrollCustomerSlip(page, false);
+    }
     await page.locator("#btn-customer-close").click();
     reports.push({ viewport: { id: "ipad13_port_" + tag, width: 1024, height: 1366, zoom }, customer: zoomed.customer, staffFooter: zoomed.footerFonts, logo: zoomed.logo });
   }
@@ -477,16 +503,17 @@ test("receipt typography, torn edges, and Show customer at every size", async ({
       await page.waitForTimeout(160);
       const tag = vp.id + "_" + count + "item";
       await page.screenshot({ path: path.join(recDir, tag + "_customer.png"), fullPage: false });
+      if (count === 8 && vp.id === "android_tab_land") {
+        await page.screenshot({ path: path.join(recDir, tag + "_customer_more.png"), fullPage: false });
+      }
+      if (count === 8 && (vp.id === "android_tab_land" || vp.id === "phone_port")) {
+        await scrollCustomerSlip(page, true);
+        await page.screenshot({ path: path.join(recDir, tag + "_customer_bottom.png"), fullPage: false });
+        await scrollCustomerSlip(page, false);
+      }
       const measured = await page.evaluate(() => window.__bbposQA.measureReceipt());
       const c = measured.customer;
-      expect(c, tag + " measurements").toBeTruthy();
-      expect(c.clippedByStage, tag + " clipped by stage").toBeFalsy();
-      expect(c.clippedByOverlay, tag + " clipped by overlay").toBeFalsy();
-      expect(c.fitsWidth, tag + " fits width").toBeTruthy();
-      expect(c.widthRatio, tag + " width ratio").toBeGreaterThanOrEqual(0.83);
-      expect(c.widthRatio, tag + " width ratio upper").toBeLessThanOrEqual(0.87);
-      expect(c.heightRatio, tag + " height cap").toBeLessThanOrEqual(0.90);
-      expect(c.cutText || [], tag + " cut text").toEqual([]);
+      expectSlipSafe(c, tag);
       expect(c.itemFontPx, tag + " item font").toBeGreaterThanOrEqual(20);
       expect(c.amtFontPx, tag + " amt font").toBeGreaterThanOrEqual(20);
       expect(c.totalFontPx, tag + " total font").toBeGreaterThanOrEqual(40);
