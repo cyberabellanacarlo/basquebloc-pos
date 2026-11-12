@@ -72,6 +72,7 @@
         (notOfficial ? '<div class="slip-official">This is not an official receipt.</div>' : '') +
         '</article>' +
         '</div>' +
+        '<div class="slip-top-fade" hidden aria-hidden="true"></div>' +
         '<div class="slip-more" hidden aria-hidden="true">' +
           '<span class="slip-more-fade"></span>' +
           '<span class="slip-more-hint">\u2193 more</span>' +

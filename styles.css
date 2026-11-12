@@ -365,6 +365,18 @@ body.receipt-open #topbar { display: none; }
   background: #fffaf2;
 }
 .slip-scroll { min-height: 0; }
+.slip-top-fade {
+  display: none;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 48px;
+  pointer-events: none;
+  z-index: 2;
+  background: linear-gradient(to top, rgba(255, 250, 242, 0), #fffaf2 72%);
+}
+.slip-shell.has-top-fade .slip-top-fade { display: block; }
 .slip-more {
   display: none;
   position: absolute;
@@ -405,6 +417,7 @@ body.receipt-open #topbar { display: none; }
   padding-bottom: 12px;
   overflow: hidden;
 }
+#customer-mount .slip-shell.is-scrollable.has-top-fade .slip-top-fade { top: 12px; }
 #customer-mount .slip-shell.is-scrollable.has-more .slip-more { bottom: 12px; }
 #customer-mount .slip-shell.is-scrollable .slip-scroll {
   flex: 1 1 auto;

@@ -128,6 +128,7 @@
     shell.style.flexShrink = "0";
     shell.classList.remove("is-scrollable");
     shell.classList.remove("has-more");
+    shell.classList.remove("has-top-fade");
     var body = shell.querySelector(".slip-body");
     if (body) {
       body.style.padding = "";
@@ -141,6 +142,11 @@
       more.hidden = true;
       more.setAttribute("aria-hidden", "true");
     }
+    var topFade = shell.querySelector(".slip-top-fade");
+    if (topFade) {
+      topFade.hidden = true;
+      topFade.setAttribute("aria-hidden", "true");
+    }
     var thanks = shell.querySelector(".slip-thanks");
     if (thanks) thanks.style.margin = "";
   }
@@ -152,10 +158,18 @@
     if (!sc || !more) return;
     var overflow = sc.scrollHeight > sc.clientHeight + 1;
     var atBottom = sc.scrollTop + sc.clientHeight >= sc.scrollHeight - 2;
+    var atTop = sc.scrollTop <= 1;
     var show = overflow && !atBottom;
     more.hidden = !show;
     more.setAttribute("aria-hidden", show ? "false" : "true");
     shell.classList.toggle("has-more", show);
+    var topFade = shell.querySelector(".slip-top-fade");
+    var showTop = overflow && !atTop;
+    if (topFade) {
+      topFade.hidden = !showTop;
+      topFade.setAttribute("aria-hidden", showTop ? "false" : "true");
+    }
+    shell.classList.toggle("has-top-fade", showTop);
   }
 
   function bindMoreHint(shell) {
@@ -1285,7 +1299,7 @@
         var bodyCanScroll = !!(scroll && scroll.scrollHeight > scroll.clientHeight + 2);
         var cut = [];
         Array.prototype.forEach.call(customerShell.querySelectorAll("div, span, img"), function (el) {
-          if (el.classList && (el.classList.contains("slip-more") || el.classList.contains("slip-more-fade") || el.classList.contains("slip-more-hint") || el.classList.contains("slip-tear"))) return;
+          if (el.classList && (el.classList.contains("slip-more") || el.classList.contains("slip-more-fade") || el.classList.contains("slip-more-hint") || el.classList.contains("slip-top-fade") || el.classList.contains("slip-tear"))) return;
           var r = el.getBoundingClientRect();
           if (r.width < 1 || r.height < 1) return;
           var clipEl = el.closest(".slip-scroll") || el.closest(".slip-body") || customerShell;
@@ -1332,6 +1346,7 @@
           var topZ = customerShell.querySelector(".slip-tear-top");
           var botZ = customerShell.querySelector(".slip-tear-bottom");
           var more = customerShell.querySelector(".slip-more");
+          var topFade = customerShell.querySelector(".slip-top-fade");
           var topR = topZ ? topZ.getBoundingClientRect() : { left: 0, top: 0, right: 0, bottom: 0 };
           var botR = botZ ? botZ.getBoundingClientRect() : { left: 0, top: 0, right: 0, bottom: 0 };
           var port = scroll ? scroll.getBoundingClientRect() : slipR;
@@ -1368,6 +1383,7 @@
             overflow: overflow,
             atBottom: atBottom,
             hintShown: hintVisible(more),
+            topFadeShown: hintVisible(topFade),
             hits: hits,
             lastText: lastText,
             lastLineGapPx: +gapPx.toFixed(2),

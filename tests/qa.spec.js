@@ -47,14 +47,23 @@ function expectSlipSafe(customer, tag, opts) {
   expect(z.atMax.lastLineGapCss, tag + " last-line gap css px (" + (z.atMax.lastText || "") + ")").toBeGreaterThanOrEqual(11.5);
   expect(z.at0.hintShown, tag + " hint at top").toBe(!!(z.at0.overflow && !z.at0.atBottom));
   expect(z.atMax.hintShown, tag + " hint at bottom").toBe(false);
+  expect(z.at0.topFadeShown, tag + " top fade at top").toBe(false);
+  expect(z.atMax.topFadeShown, tag + " top fade at bottom").toBe(!!z.atMax.overflow);
 }
 
-async function scrollCustomerSlip(page, toBottom) {
-  await page.evaluate((toBottom) => {
+
+async function scrollCustomerSlip(page, where) {
+  await page.evaluate((where) => {
     const sc = document.querySelector("#customer-mount .slip-scroll");
     if (!sc) return;
-    sc.scrollTop = toBottom ? sc.scrollHeight : 0;
-  }, toBottom);
+    if (where === "mid") {
+      sc.scrollTop = Math.round(Math.max(0, sc.scrollHeight - sc.clientHeight) / 2);
+    } else if (where === true || where === "bottom") {
+      sc.scrollTop = sc.scrollHeight;
+    } else {
+      sc.scrollTop = 0;
+    }
+  }, where);
   await page.waitForTimeout(80);
 }
 
@@ -133,9 +142,9 @@ test("full cash checkout, receipt, history, reload, offline", async ({ page, con
   for (const n of measured.footerFonts) {
     expect(n.fontPx, n.text).toBeGreaterThanOrEqual(14);
   }
-  require("fs").mkdirSync(require("path").join(__dirname, "..", "shots", "receipt_v5"), { recursive: true });
+  require("fs").mkdirSync(require("path").join(__dirname, "..", "shots", "receipt_v5_1"), { recursive: true });
   require("fs").writeFileSync(
-    require("path").join(__dirname, "..", "shots", "receipt_v5", "measured.json"),
+    require("path").join(__dirname, "..", "shots", "receipt_v5_1", "measured.json"),
     JSON.stringify(measured, null, 2)
   );
 
@@ -305,7 +314,7 @@ test("screenshots at phone, Android tablet, and 13-inch iPad sizes", async ({ pa
 });
 
 test("receipt typography, torn edges, and Show customer at every size", async ({ page }) => {
-  const recDir = path.join(SHOTS, "receipt_v5");
+  const recDir = path.join(SHOTS, "receipt_v5_1");
   fs.mkdirSync(recDir, { recursive: true });
 
   await page.setViewportSize({ width: 1280, height: 800 });
@@ -505,11 +514,29 @@ test("receipt typography, torn edges, and Show customer at every size", async ({
       await page.screenshot({ path: path.join(recDir, tag + "_customer.png"), fullPage: false });
       if (count === 8 && vp.id === "android_tab_land") {
         await page.screenshot({ path: path.join(recDir, tag + "_customer_more.png"), fullPage: false });
+        await scrollCustomerSlip(page, "mid");
+        await page.screenshot({ path: path.join(recDir, tag + "_customer_mid.png"), fullPage: false });
+        const mid = await page.evaluate(() => {
+          const shell = document.querySelector("#customer-mount .slip-shell");
+          const sc = document.querySelector("#customer-mount .slip-scroll");
+          const more = shell && shell.querySelector(".slip-more");
+          const topFade = shell && shell.querySelector(".slip-top-fade");
+          return {
+            scrollTop: sc ? sc.scrollTop : 0,
+            max: sc ? sc.scrollHeight - sc.clientHeight : 0,
+            topFade: !!(topFade && !topFade.hidden),
+            bottomHint: !!(more && !more.hidden)
+          };
+        });
+        expect(mid.scrollTop, tag + " mid scroll").toBeGreaterThan(1);
+        expect(mid.scrollTop, tag + " mid not at bottom").toBeLessThan(mid.max - 1);
+        expect(mid.topFade, tag + " mid top fade").toBe(true);
+        expect(mid.bottomHint, tag + " mid bottom hint").toBe(true);
       }
       if (count === 8 && (vp.id === "android_tab_land" || vp.id === "phone_port")) {
-        await scrollCustomerSlip(page, true);
+        await scrollCustomerSlip(page, "bottom");
         await page.screenshot({ path: path.join(recDir, tag + "_customer_bottom.png"), fullPage: false });
-        await scrollCustomerSlip(page, false);
+        await scrollCustomerSlip(page, "top");
       }
       const measured = await page.evaluate(() => window.__bbposQA.measureReceipt());
       const c = measured.customer;
