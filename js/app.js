@@ -1299,7 +1299,7 @@
         var bodyCanScroll = !!(scroll && scroll.scrollHeight > scroll.clientHeight + 2);
         var cut = [];
         Array.prototype.forEach.call(customerShell.querySelectorAll("div, span, img"), function (el) {
-          if (el.classList && (el.classList.contains("slip-more") || el.classList.contains("slip-more-fade") || el.classList.contains("slip-more-hint") || el.classList.contains("slip-top-fade") || el.classList.contains("slip-tear"))) return;
+          if (el.classList && (el.classList.contains("slip-more") || el.classList.contains("slip-more-fade") || el.classList.contains("slip-more-strip") || el.classList.contains("slip-more-hint") || el.classList.contains("slip-top-fade") || el.classList.contains("slip-tear"))) return;
           var r = el.getBoundingClientRect();
           if (r.width < 1 || r.height < 1) return;
           var clipEl = el.closest(".slip-scroll") || el.closest(".slip-body") || customerShell;
@@ -1347,6 +1347,8 @@
           var botZ = customerShell.querySelector(".slip-tear-bottom");
           var more = customerShell.querySelector(".slip-more");
           var topFade = customerShell.querySelector(".slip-top-fade");
+          var strip = customerShell.querySelector(".slip-more-strip");
+          var hintEl = customerShell.querySelector(".slip-more-hint");
           var topR = topZ ? topZ.getBoundingClientRect() : { left: 0, top: 0, right: 0, bottom: 0 };
           var botR = botZ ? botZ.getBoundingClientRect() : { left: 0, top: 0, right: 0, bottom: 0 };
           var port = scroll ? scroll.getBoundingClientRect() : slipR;
@@ -1354,11 +1356,13 @@
           var lastBottom = 0;
           var lastText = "";
           var nodes = customerShell.querySelectorAll(".slip-logo, .slip-brand, .slip-tagline, .slip-city, .slip-ord-label, .slip-ord-no, .slip-cust, .slip-row, .slip-thanks, .slip-note, .slip-care, .slip-official");
+          var lineBoxes = [];
           Array.prototype.forEach.call(nodes, function (el) {
             var r = el.getBoundingClientRect();
             if (r.width < 0.5 || r.height < 0.5) return;
             var c = clipRect(r, port);
             if (c.right - c.left < 0.5 || c.bottom - c.top < 0.5) return;
+            lineBoxes.push({ el: el, c: c });
             if ((topZ && overlap(c, topR, 0.5)) || (botZ && overlap(c, botR, 0.5))) {
               hits.push({
                 text: (el.textContent || el.getAttribute("alt") || "").trim().slice(0, 40),
@@ -1372,6 +1376,32 @@
               lastText = (el.textContent || "").trim().slice(0, 40);
             }
           });
+          var hintOn = hintVisible(more);
+          var hintOverlaps = [];
+          var stripR = null;
+          var hintR = null;
+          if (hintOn && strip && hintEl) {
+            stripR = strip.getBoundingClientRect();
+            hintR = hintEl.getBoundingClientRect();
+            lineBoxes.forEach(function (item) {
+              var c = item.c;
+              /* Visible text is the part of the line in the scroll port that is not fully behind the opaque strip. */
+              var vis = {
+                left: c.left,
+                top: c.top,
+                right: c.right,
+                bottom: Math.min(c.bottom, stripR.top)
+              };
+              if (vis.bottom - vis.top < 0.5 || vis.right - vis.left < 0.5) return;
+              if (overlap(vis, hintR, 0.5)) {
+                hintOverlaps.push({
+                  text: (item.el.textContent || item.el.getAttribute("alt") || "").trim().slice(0, 40),
+                  top: +vis.top.toFixed(2),
+                  bottom: +vis.bottom.toFixed(2)
+                });
+              }
+            });
+          }
           var scale = currentScale();
           var zoom = parseFloat(document.documentElement.style.zoom || "1") || 1;
           var gapPx = botZ ? (botR.top - lastBottom) : 0;
@@ -1382,8 +1412,10 @@
             scrollTop: scroll ? scroll.scrollTop : 0,
             overflow: overflow,
             atBottom: atBottom,
-            hintShown: hintVisible(more),
+            hintShown: hintOn,
             topFadeShown: hintVisible(topFade),
+            hintOverlaps: hintOverlaps,
+            stripHeightPx: stripR ? +stripR.height.toFixed(2) : 0,
             hits: hits,
             lastText: lastText,
             lastLineGapPx: +gapPx.toFixed(2),

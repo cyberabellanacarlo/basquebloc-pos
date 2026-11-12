@@ -49,6 +49,10 @@ function expectSlipSafe(customer, tag, opts) {
   expect(z.atMax.hintShown, tag + " hint at bottom").toBe(false);
   expect(z.at0.topFadeShown, tag + " top fade at top").toBe(false);
   expect(z.atMax.topFadeShown, tag + " top fade at bottom").toBe(!!z.atMax.overflow);
+  if (z.at0.hintShown) {
+    expect(z.at0.hintOverlaps || [], tag + " hint overlaps visible text at top").toEqual([]);
+  }
+  expect(z.atMax.hintOverlaps || [], tag + " hint overlaps at bottom").toEqual([]);
 }
 
 
@@ -142,9 +146,9 @@ test("full cash checkout, receipt, history, reload, offline", async ({ page, con
   for (const n of measured.footerFonts) {
     expect(n.fontPx, n.text).toBeGreaterThanOrEqual(14);
   }
-  require("fs").mkdirSync(require("path").join(__dirname, "..", "shots", "receipt_v5_1"), { recursive: true });
+  require("fs").mkdirSync(require("path").join(__dirname, "..", "shots", "receipt_v5_2"), { recursive: true });
   require("fs").writeFileSync(
-    require("path").join(__dirname, "..", "shots", "receipt_v5_1", "measured.json"),
+    require("path").join(__dirname, "..", "shots", "receipt_v5_2", "measured.json"),
     JSON.stringify(measured, null, 2)
   );
 
@@ -314,7 +318,7 @@ test("screenshots at phone, Android tablet, and 13-inch iPad sizes", async ({ pa
 });
 
 test("receipt typography, torn edges, and Show customer at every size", async ({ page }) => {
-  const recDir = path.join(SHOTS, "receipt_v5_1");
+  const recDir = path.join(SHOTS, "receipt_v5_2");
   fs.mkdirSync(recDir, { recursive: true });
 
   await page.setViewportSize({ width: 1280, height: 800 });
@@ -521,17 +525,42 @@ test("receipt typography, torn edges, and Show customer at every size", async ({
           const sc = document.querySelector("#customer-mount .slip-scroll");
           const more = shell && shell.querySelector(".slip-more");
           const topFade = shell && shell.querySelector(".slip-top-fade");
+          const strip = shell && shell.querySelector(".slip-more-strip");
+          const hint = shell && shell.querySelector(".slip-more-hint");
+          const port = sc ? sc.getBoundingClientRect() : null;
+          const stripR = strip ? strip.getBoundingClientRect() : null;
+          const hintR = hint ? hint.getBoundingClientRect() : null;
+          const overlaps = [];
+          if (sc && stripR && hintR) {
+            shell.querySelectorAll(".slip-logo, .slip-brand, .slip-tagline, .slip-city, .slip-ord-label, .slip-ord-no, .slip-cust, .slip-row, .slip-thanks, .slip-note, .slip-care, .slip-official").forEach((el) => {
+              const r = el.getBoundingClientRect();
+              const vis = {
+                left: Math.max(r.left, port.left),
+                top: Math.max(r.top, port.top),
+                right: Math.min(r.right, port.right),
+                bottom: Math.min(r.bottom, port.bottom, stripR.top)
+              };
+              if (vis.right - vis.left < 0.5 || vis.bottom - vis.top < 0.5) return;
+              const hit = vis.left < hintR.right - 0.5 && vis.right > hintR.left + 0.5 && vis.top < hintR.bottom - 0.5 && vis.bottom > hintR.top + 0.5;
+              if (hit) overlaps.push((el.textContent || "").trim().slice(0, 40));
+            });
+          }
           return {
             scrollTop: sc ? sc.scrollTop : 0,
             max: sc ? sc.scrollHeight - sc.clientHeight : 0,
             topFade: !!(topFade && !topFade.hidden),
-            bottomHint: !!(more && !more.hidden)
+            bottomHint: !!(more && !more.hidden),
+            stripH: stripR ? stripR.height : 0,
+            hintOverlaps: overlaps
           };
         });
         expect(mid.scrollTop, tag + " mid scroll").toBeGreaterThan(1);
         expect(mid.scrollTop, tag + " mid not at bottom").toBeLessThan(mid.max - 1);
         expect(mid.topFade, tag + " mid top fade").toBe(true);
         expect(mid.bottomHint, tag + " mid bottom hint").toBe(true);
+        expect(mid.stripH, tag + " mid strip height").toBeGreaterThanOrEqual(14);
+        expect(mid.stripH, tag + " mid strip height cap").toBeLessThanOrEqual(20);
+        expect(mid.hintOverlaps, tag + " mid hint overlaps visible text").toEqual([]);
       }
       if (count === 8 && (vp.id === "android_tab_land" || vp.id === "phone_port")) {
         await scrollCustomerSlip(page, "bottom");

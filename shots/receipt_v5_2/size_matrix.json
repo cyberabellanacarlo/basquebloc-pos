@@ -1,0 +1,1584 @@
+[
+  {
+    "viewport": {
+      "id": "phone_port",
+      "width": 390,
+      "height": 844,
+      "items": 1
+    },
+    "customer": {
+      "viewportW": 390,
+      "viewportH": 844,
+      "slipWidthPx": 331.5,
+      "slipHeightPx": 727.9976806640625,
+      "heightRatio": 0.8625564936777992,
+      "widthRatio": 0.85,
+      "fitsWidth": true,
+      "clippedByStage": false,
+      "clippedByOverlay": false,
+      "canScroll": true,
+      "bodyScrollHeight": 825,
+      "bodyClientHeight": 717,
+      "cutText": [],
+      "zigzag": {
+        "at0": {
+          "scrollTop": 0,
+          "overflow": true,
+          "atBottom": false,
+          "hintShown": true,
+          "topFadeShown": false,
+          "hintOverlaps": [],
+          "stripHeightPx": 15.15,
+          "hits": [],
+          "lastText": "Best enjoyed within 3 days, kept chilled",
+          "lastLineGapPx": 11.37,
+          "lastLineGapCss": 12,
+          "scale": 0.9471,
+          "zoom": 1
+        },
+        "atMax": {
+          "scrollTop": 108,
+          "overflow": true,
+          "atBottom": true,
+          "hintShown": false,
+          "topFadeShown": true,
+          "hintOverlaps": [],
+          "stripHeightPx": 0,
+          "hits": [],
+          "lastText": "This is not an official receipt.",
+          "lastLineGapPx": 22.72,
+          "lastLineGapCss": 23.98,
+          "scale": 0.9471,
+          "zoom": 1
+        }
+      },
+      "itemFontPx": 20,
+      "amtFontPx": 20,
+      "totalFontPx": 40,
+      "totalColor": "rgb(138, 100, 32)",
+      "footerFonts": [
+        {
+          "text": "Please wait for No. 02 to be called.",
+          "fontPx": 16
+        },
+        {
+          "text": "Enjoy your cheesecake.",
+          "fontPx": 16
+        },
+        {
+          "text": "Best enjoyed within 3 days, kept chilled.",
+          "fontPx": 16
+        },
+        {
+          "text": "Basque Bloc Cheesecakes · facebook.com/BasqueBlocPH",
+          "fontPx": 16
+        }
+      ],
+      "logo": {
+        "widthPx": 113.65715026855469,
+        "cssWidthPx": 120,
+        "blend": "multiply",
+        "bg": "rgba(0, 0, 0, 0)",
+        "naturalWidth": 720,
+        "naturalHeight": 442,
+        "corners": [
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          },
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          },
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          },
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          }
+        ],
+        "opaqueWhiteSamples": 0,
+        "sampled": 1640
+      }
+    }
+  },
+  {
+    "viewport": {
+      "id": "ipad_mini_land",
+      "width": 1024,
+      "height": 768,
+      "items": 1
+    },
+    "customer": {
+      "viewportW": 1024,
+      "viewportH": 768,
+      "slipWidthPx": 870.39990234375,
+      "slipHeightPx": 651.998291015625,
+      "heightRatio": 0.8489561080932617,
+      "widthRatio": 0.8499999046325684,
+      "fitsWidth": true,
+      "clippedByStage": false,
+      "clippedByOverlay": false,
+      "canScroll": true,
+      "bodyScrollHeight": 767,
+      "bodyClientHeight": 685,
+      "cutText": [],
+      "zigzag": {
+        "at0": {
+          "scrollTop": 0,
+          "overflow": true,
+          "atBottom": false,
+          "hintShown": true,
+          "topFadeShown": false,
+          "hintOverlaps": [],
+          "stripHeightPx": 14.15,
+          "hits": [],
+          "lastText": "Best enjoyed within 3 days, kept chilled",
+          "lastLineGapPx": 10.61,
+          "lastLineGapCss": 12,
+          "scale": 0.8846,
+          "zoom": 1
+        },
+        "atMax": {
+          "scrollTop": 82,
+          "overflow": true,
+          "atBottom": true,
+          "hintShown": false,
+          "topFadeShown": true,
+          "hintOverlaps": [],
+          "stripHeightPx": 0,
+          "hits": [],
+          "lastText": "This is not an official receipt.",
+          "lastLineGapPx": 21.56,
+          "lastLineGapCss": 24.38,
+          "scale": 0.8846,
+          "zoom": 1
+        }
+      },
+      "itemFontPx": 20,
+      "amtFontPx": 20,
+      "totalFontPx": 40,
+      "totalColor": "rgb(138, 100, 32)",
+      "footerFonts": [
+        {
+          "text": "Please wait for No. 02 to be called.",
+          "fontPx": 16
+        },
+        {
+          "text": "Enjoy your cheesecake.",
+          "fontPx": 16
+        },
+        {
+          "text": "Best enjoyed within 3 days, kept chilled.",
+          "fontPx": 16
+        },
+        {
+          "text": "Basque Bloc Cheesecakes · facebook.com/BasqueBlocPH",
+          "fontPx": 16
+        }
+      ],
+      "logo": {
+        "widthPx": 106.14633178710938,
+        "cssWidthPx": 120,
+        "blend": "multiply",
+        "bg": "rgba(0, 0, 0, 0)",
+        "naturalWidth": 720,
+        "naturalHeight": 442,
+        "corners": [
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          },
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          },
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          },
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          }
+        ],
+        "opaqueWhiteSamples": 0,
+        "sampled": 1640
+      }
+    }
+  },
+  {
+    "viewport": {
+      "id": "ipad_mini_port",
+      "width": 768,
+      "height": 1024,
+      "items": 1
+    },
+    "customer": {
+      "viewportW": 768,
+      "viewportH": 1024,
+      "slipWidthPx": 652.800048828125,
+      "slipHeightPx": 906.3648681640625,
+      "heightRatio": 0.8851219415664673,
+      "widthRatio": 0.8500000635782877,
+      "fitsWidth": true,
+      "clippedByStage": false,
+      "clippedByOverlay": false,
+      "canScroll": false,
+      "bodyScrollHeight": 801,
+      "bodyClientHeight": 801,
+      "cutText": [],
+      "zigzag": {
+        "at0": {
+          "scrollTop": 0,
+          "overflow": false,
+          "atBottom": true,
+          "hintShown": false,
+          "topFadeShown": false,
+          "hintOverlaps": [],
+          "stripHeightPx": 0,
+          "hits": [],
+          "lastText": "This is not an official receipt.",
+          "lastLineGapPx": 21.87,
+          "lastLineGapCss": 20,
+          "scale": 1.0935,
+          "zoom": 1
+        },
+        "atMax": {
+          "scrollTop": 0,
+          "overflow": false,
+          "atBottom": true,
+          "hintShown": false,
+          "topFadeShown": false,
+          "hintOverlaps": [],
+          "stripHeightPx": 0,
+          "hits": [],
+          "lastText": "This is not an official receipt.",
+          "lastLineGapPx": 21.87,
+          "lastLineGapCss": 20,
+          "scale": 1.0935,
+          "zoom": 1
+        }
+      },
+      "itemFontPx": 20,
+      "amtFontPx": 20,
+      "totalFontPx": 40,
+      "totalColor": "rgb(138, 100, 32)",
+      "footerFonts": [
+        {
+          "text": "Please wait for No. 02 to be called.",
+          "fontPx": 16
+        },
+        {
+          "text": "Enjoy your cheesecake.",
+          "fontPx": 16
+        },
+        {
+          "text": "Best enjoyed within 3 days, kept chilled.",
+          "fontPx": 16
+        },
+        {
+          "text": "Basque Bloc Cheesecakes · facebook.com/BasqueBlocPH",
+          "fontPx": 16
+        }
+      ],
+      "logo": {
+        "widthPx": 131.21609497070312,
+        "cssWidthPx": 120,
+        "blend": "multiply",
+        "bg": "rgba(0, 0, 0, 0)",
+        "naturalWidth": 720,
+        "naturalHeight": 442,
+        "corners": [
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          },
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          },
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          },
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          }
+        ],
+        "opaqueWhiteSamples": 0,
+        "sampled": 1640
+      }
+    }
+  },
+  {
+    "viewport": {
+      "id": "android_tab_land",
+      "width": 1280,
+      "height": 800,
+      "items": 1
+    },
+    "customer": {
+      "viewportW": 1280,
+      "viewportH": 800,
+      "slipWidthPx": 1088,
+      "slipHeightPx": 683.989501953125,
+      "heightRatio": 0.8549868774414062,
+      "widthRatio": 0.85,
+      "fitsWidth": true,
+      "clippedByStage": false,
+      "clippedByOverlay": false,
+      "canScroll": true,
+      "bodyScrollHeight": 767,
+      "bodyClientHeight": 728,
+      "cutText": [],
+      "zigzag": {
+        "at0": {
+          "scrollTop": 0,
+          "overflow": true,
+          "atBottom": false,
+          "hintShown": true,
+          "topFadeShown": false,
+          "hintOverlaps": [],
+          "stripHeightPx": 14.04,
+          "hits": [],
+          "lastText": "Basque Bloc Cheesecakes · facebook.com/B",
+          "lastLineGapPx": 10.53,
+          "lastLineGapCss": 12,
+          "scale": 0.8774,
+          "zoom": 1
+        },
+        "atMax": {
+          "scrollTop": 39,
+          "overflow": true,
+          "atBottom": true,
+          "hintShown": false,
+          "topFadeShown": true,
+          "hintOverlaps": [],
+          "stripHeightPx": 0,
+          "hits": [],
+          "lastText": "This is not an official receipt.",
+          "lastLineGapPx": 20.91,
+          "lastLineGapCss": 23.83,
+          "scale": 0.8774,
+          "zoom": 1
+        }
+      },
+      "itemFontPx": 20,
+      "amtFontPx": 20,
+      "totalFontPx": 40,
+      "totalColor": "rgb(138, 100, 32)",
+      "footerFonts": [
+        {
+          "text": "Please wait for No. 02 to be called.",
+          "fontPx": 16
+        },
+        {
+          "text": "Enjoy your cheesecake.",
+          "fontPx": 16
+        },
+        {
+          "text": "Best enjoyed within 3 days, kept chilled.",
+          "fontPx": 16
+        },
+        {
+          "text": "Basque Bloc Cheesecakes · facebook.com/BasqueBlocPH",
+          "fontPx": 16
+        }
+      ],
+      "logo": {
+        "widthPx": 105.290283203125,
+        "cssWidthPx": 120,
+        "blend": "multiply",
+        "bg": "rgba(0, 0, 0, 0)",
+        "naturalWidth": 720,
+        "naturalHeight": 442,
+        "corners": [
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          },
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          },
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          },
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          }
+        ],
+        "opaqueWhiteSamples": 0,
+        "sampled": 1640
+      }
+    }
+  },
+  {
+    "viewport": {
+      "id": "android_tab_port",
+      "width": 800,
+      "height": 1280,
+      "items": 1
+    },
+    "customer": {
+      "viewportW": 800,
+      "viewportH": 1280,
+      "slipWidthPx": 680,
+      "slipHeightPx": 1113.2138671875,
+      "heightRatio": 0.8696983337402344,
+      "widthRatio": 0.85,
+      "fitsWidth": true,
+      "clippedByStage": false,
+      "clippedByOverlay": false,
+      "canScroll": false,
+      "bodyScrollHeight": 823,
+      "bodyClientHeight": 823,
+      "cutText": [],
+      "zigzag": {
+        "at0": {
+          "scrollTop": 0,
+          "overflow": false,
+          "atBottom": true,
+          "hintShown": false,
+          "topFadeShown": false,
+          "hintOverlaps": [],
+          "stripHeightPx": 0,
+          "hits": [],
+          "lastText": "This is not an official receipt.",
+          "lastLineGapPx": 26.15,
+          "lastLineGapCss": 20,
+          "scale": 1.3077,
+          "zoom": 1
+        },
+        "atMax": {
+          "scrollTop": 0,
+          "overflow": false,
+          "atBottom": true,
+          "hintShown": false,
+          "topFadeShown": false,
+          "hintOverlaps": [],
+          "stripHeightPx": 0,
+          "hits": [],
+          "lastText": "This is not an official receipt.",
+          "lastLineGapPx": 26.15,
+          "lastLineGapCss": 20,
+          "scale": 1.3077,
+          "zoom": 1
+        }
+      },
+      "itemFontPx": 20,
+      "amtFontPx": 20,
+      "totalFontPx": 40,
+      "totalColor": "rgb(138, 100, 32)",
+      "footerFonts": [
+        {
+          "text": "Please wait for No. 02 to be called.",
+          "fontPx": 16
+        },
+        {
+          "text": "Enjoy your cheesecake.",
+          "fontPx": 16
+        },
+        {
+          "text": "Best enjoyed within 3 days, kept chilled.",
+          "fontPx": 16
+        },
+        {
+          "text": "Basque Bloc Cheesecakes · facebook.com/BasqueBlocPH",
+          "fontPx": 16
+        }
+      ],
+      "logo": {
+        "widthPx": 156.923095703125,
+        "cssWidthPx": 120,
+        "blend": "multiply",
+        "bg": "rgba(0, 0, 0, 0)",
+        "naturalWidth": 720,
+        "naturalHeight": 442,
+        "corners": [
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          },
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          },
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          },
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          }
+        ],
+        "opaqueWhiteSamples": 0,
+        "sampled": 1640
+      }
+    }
+  },
+  {
+    "viewport": {
+      "id": "ipad13_land",
+      "width": 1366,
+      "height": 1024,
+      "items": 1
+    },
+    "customer": {
+      "viewportW": 1366,
+      "viewportH": 1024,
+      "slipWidthPx": 1161.10009765625,
+      "slipHeightPx": 907.09228515625,
+      "heightRatio": 0.8858323097229004,
+      "widthRatio": 0.8500000714906661,
+      "fitsWidth": true,
+      "clippedByStage": false,
+      "clippedByOverlay": false,
+      "canScroll": false,
+      "bodyScrollHeight": 801,
+      "bodyClientHeight": 801,
+      "cutText": [],
+      "zigzag": {
+        "at0": {
+          "scrollTop": 0,
+          "overflow": false,
+          "atBottom": true,
+          "hintShown": false,
+          "topFadeShown": false,
+          "hintOverlaps": [],
+          "stripHeightPx": 0,
+          "hits": [],
+          "lastText": "This is not an official receipt.",
+          "lastLineGapPx": 21.89,
+          "lastLineGapCss": 20,
+          "scale": 1.0943,
+          "zoom": 1
+        },
+        "atMax": {
+          "scrollTop": 0,
+          "overflow": false,
+          "atBottom": true,
+          "hintShown": false,
+          "topFadeShown": false,
+          "hintOverlaps": [],
+          "stripHeightPx": 0,
+          "hits": [],
+          "lastText": "This is not an official receipt.",
+          "lastLineGapPx": 21.89,
+          "lastLineGapCss": 20,
+          "scale": 1.0943,
+          "zoom": 1
+        }
+      },
+      "itemFontPx": 20,
+      "amtFontPx": 20,
+      "totalFontPx": 40,
+      "totalColor": "rgb(138, 100, 32)",
+      "footerFonts": [
+        {
+          "text": "Please wait for No. 02 to be called.",
+          "fontPx": 16
+        },
+        {
+          "text": "Enjoy your cheesecake.",
+          "fontPx": 16
+        },
+        {
+          "text": "Best enjoyed within 3 days, kept chilled.",
+          "fontPx": 16
+        },
+        {
+          "text": "Basque Bloc Cheesecakes · facebook.com/BasqueBlocPH",
+          "fontPx": 16
+        }
+      ],
+      "logo": {
+        "widthPx": 131.3214111328125,
+        "cssWidthPx": 120,
+        "blend": "multiply",
+        "bg": "rgba(0, 0, 0, 0)",
+        "naturalWidth": 720,
+        "naturalHeight": 442,
+        "corners": [
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          },
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          },
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          },
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          }
+        ],
+        "opaqueWhiteSamples": 0,
+        "sampled": 1640
+      }
+    }
+  },
+  {
+    "viewport": {
+      "id": "ipad13_port",
+      "width": 1024,
+      "height": 1366,
+      "items": 1
+    },
+    "customer": {
+      "viewportW": 1024,
+      "viewportH": 1366,
+      "slipWidthPx": 870.39990234375,
+      "slipHeightPx": 1229.07373046875,
+      "heightRatio": 0.8997611496842972,
+      "widthRatio": 0.8499999046325684,
+      "fitsWidth": true,
+      "clippedByStage": false,
+      "clippedByOverlay": false,
+      "canScroll": false,
+      "bodyScrollHeight": 801,
+      "bodyClientHeight": 801,
+      "cutText": [],
+      "zigzag": {
+        "at0": {
+          "scrollTop": 0,
+          "overflow": false,
+          "atBottom": true,
+          "hintShown": false,
+          "topFadeShown": false,
+          "hintOverlaps": [],
+          "stripHeightPx": 0,
+          "hits": [],
+          "lastText": "This is not an official receipt.",
+          "lastLineGapPx": 29.66,
+          "lastLineGapCss": 20,
+          "scale": 1.4828,
+          "zoom": 1
+        },
+        "atMax": {
+          "scrollTop": 0,
+          "overflow": false,
+          "atBottom": true,
+          "hintShown": false,
+          "topFadeShown": false,
+          "hintOverlaps": [],
+          "stripHeightPx": 0,
+          "hits": [],
+          "lastText": "This is not an official receipt.",
+          "lastLineGapPx": 29.66,
+          "lastLineGapCss": 20,
+          "scale": 1.4828,
+          "zoom": 1
+        }
+      },
+      "itemFontPx": 20,
+      "amtFontPx": 20,
+      "totalFontPx": 40,
+      "totalColor": "rgb(138, 100, 32)",
+      "footerFonts": [
+        {
+          "text": "Please wait for No. 02 to be called.",
+          "fontPx": 16
+        },
+        {
+          "text": "Enjoy your cheesecake.",
+          "fontPx": 16
+        },
+        {
+          "text": "Best enjoyed within 3 days, kept chilled.",
+          "fontPx": 16
+        },
+        {
+          "text": "Basque Bloc Cheesecakes · facebook.com/BasqueBlocPH",
+          "fontPx": 16
+        }
+      ],
+      "logo": {
+        "widthPx": 177.93527221679688,
+        "cssWidthPx": 120,
+        "blend": "multiply",
+        "bg": "rgba(0, 0, 0, 0)",
+        "naturalWidth": 720,
+        "naturalHeight": 442,
+        "corners": [
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          },
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          },
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          },
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          }
+        ],
+        "opaqueWhiteSamples": 0,
+        "sampled": 1640
+      }
+    }
+  },
+  {
+    "viewport": {
+      "id": "phone_port",
+      "width": 390,
+      "height": 844,
+      "items": 8
+    },
+    "customer": {
+      "viewportW": 390,
+      "viewportH": 844,
+      "slipWidthPx": 331.5,
+      "slipHeightPx": 727.9976806640625,
+      "heightRatio": 0.8625564936777992,
+      "widthRatio": 0.85,
+      "fitsWidth": true,
+      "clippedByStage": false,
+      "clippedByOverlay": false,
+      "canScroll": true,
+      "bodyScrollHeight": 1014,
+      "bodyClientHeight": 717,
+      "cutText": [],
+      "zigzag": {
+        "at0": {
+          "scrollTop": 0,
+          "overflow": true,
+          "atBottom": false,
+          "hintShown": true,
+          "topFadeShown": false,
+          "hintOverlaps": [],
+          "stripHeightPx": 15.15,
+          "hits": [],
+          "lastText": "Cash₱20,000.00",
+          "lastLineGapPx": 11.37,
+          "lastLineGapCss": 12,
+          "scale": 0.9471,
+          "zoom": 1
+        },
+        "atMax": {
+          "scrollTop": 297,
+          "overflow": true,
+          "atBottom": true,
+          "hintShown": false,
+          "topFadeShown": true,
+          "hintOverlaps": [],
+          "stripHeightPx": 0,
+          "hits": [],
+          "lastText": "This is not an official receipt.",
+          "lastLineGapPx": 22.72,
+          "lastLineGapCss": 23.98,
+          "scale": 0.9471,
+          "zoom": 1
+        }
+      },
+      "itemFontPx": 20,
+      "amtFontPx": 20,
+      "totalFontPx": 40,
+      "totalColor": "rgb(138, 100, 32)",
+      "footerFonts": [
+        {
+          "text": "Please wait for No. 03 to be called.",
+          "fontPx": 16
+        },
+        {
+          "text": "Enjoy your cheesecake.",
+          "fontPx": 16
+        },
+        {
+          "text": "Best enjoyed within 3 days, kept chilled.",
+          "fontPx": 16
+        },
+        {
+          "text": "Basque Bloc Cheesecakes · facebook.com/BasqueBlocPH",
+          "fontPx": 16
+        }
+      ],
+      "logo": {
+        "widthPx": 113.65715026855469,
+        "cssWidthPx": 120,
+        "blend": "multiply",
+        "bg": "rgba(0, 0, 0, 0)",
+        "naturalWidth": 720,
+        "naturalHeight": 442,
+        "corners": [
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          },
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          },
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          },
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          }
+        ],
+        "opaqueWhiteSamples": 0,
+        "sampled": 1640
+      }
+    }
+  },
+  {
+    "viewport": {
+      "id": "ipad_mini_land",
+      "width": 1024,
+      "height": 768,
+      "items": 8
+    },
+    "customer": {
+      "viewportW": 1024,
+      "viewportH": 768,
+      "slipWidthPx": 870.39990234375,
+      "slipHeightPx": 651.998291015625,
+      "heightRatio": 0.8489561080932617,
+      "widthRatio": 0.8499999046325684,
+      "fitsWidth": true,
+      "clippedByStage": false,
+      "clippedByOverlay": false,
+      "canScroll": true,
+      "bodyScrollHeight": 956,
+      "bodyClientHeight": 685,
+      "cutText": [],
+      "zigzag": {
+        "at0": {
+          "scrollTop": 0,
+          "overflow": true,
+          "atBottom": false,
+          "hintShown": true,
+          "topFadeShown": false,
+          "hintOverlaps": [],
+          "stripHeightPx": 14.15,
+          "hits": [],
+          "lastText": "TOTAL₱405.00",
+          "lastLineGapPx": 10.78,
+          "lastLineGapCss": 12.19,
+          "scale": 0.8846,
+          "zoom": 1
+        },
+        "atMax": {
+          "scrollTop": 271,
+          "overflow": true,
+          "atBottom": true,
+          "hintShown": false,
+          "topFadeShown": true,
+          "hintOverlaps": [],
+          "stripHeightPx": 0,
+          "hits": [],
+          "lastText": "This is not an official receipt.",
+          "lastLineGapPx": 21.56,
+          "lastLineGapCss": 24.38,
+          "scale": 0.8846,
+          "zoom": 1
+        }
+      },
+      "itemFontPx": 20,
+      "amtFontPx": 20,
+      "totalFontPx": 40,
+      "totalColor": "rgb(138, 100, 32)",
+      "footerFonts": [
+        {
+          "text": "Please wait for No. 03 to be called.",
+          "fontPx": 16
+        },
+        {
+          "text": "Enjoy your cheesecake.",
+          "fontPx": 16
+        },
+        {
+          "text": "Best enjoyed within 3 days, kept chilled.",
+          "fontPx": 16
+        },
+        {
+          "text": "Basque Bloc Cheesecakes · facebook.com/BasqueBlocPH",
+          "fontPx": 16
+        }
+      ],
+      "logo": {
+        "widthPx": 106.14633178710938,
+        "cssWidthPx": 120,
+        "blend": "multiply",
+        "bg": "rgba(0, 0, 0, 0)",
+        "naturalWidth": 720,
+        "naturalHeight": 442,
+        "corners": [
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          },
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          },
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          },
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          }
+        ],
+        "opaqueWhiteSamples": 0,
+        "sampled": 1640
+      }
+    }
+  },
+  {
+    "viewport": {
+      "id": "ipad_mini_port",
+      "width": 768,
+      "height": 1024,
+      "items": 8
+    },
+    "customer": {
+      "viewportW": 768,
+      "viewportH": 1024,
+      "slipWidthPx": 652.800048828125,
+      "slipHeightPx": 882.1038818359375,
+      "heightRatio": 0.8614295721054077,
+      "widthRatio": 0.8500000635782877,
+      "fitsWidth": true,
+      "clippedByStage": false,
+      "clippedByOverlay": false,
+      "canScroll": false,
+      "bodyScrollHeight": 956,
+      "bodyClientHeight": 956,
+      "cutText": [],
+      "zigzag": {
+        "at0": {
+          "scrollTop": 0,
+          "overflow": false,
+          "atBottom": true,
+          "hintShown": false,
+          "topFadeShown": false,
+          "hintOverlaps": [],
+          "stripHeightPx": 0,
+          "hits": [],
+          "lastText": "This is not an official receipt.",
+          "lastLineGapPx": 10.76,
+          "lastLineGapCss": 12,
+          "scale": 0.8967,
+          "zoom": 1
+        },
+        "atMax": {
+          "scrollTop": 0,
+          "overflow": false,
+          "atBottom": true,
+          "hintShown": false,
+          "topFadeShown": false,
+          "hintOverlaps": [],
+          "stripHeightPx": 0,
+          "hits": [],
+          "lastText": "This is not an official receipt.",
+          "lastLineGapPx": 10.76,
+          "lastLineGapCss": 12,
+          "scale": 0.8967,
+          "zoom": 1
+        }
+      },
+      "itemFontPx": 20,
+      "amtFontPx": 20,
+      "totalFontPx": 40,
+      "totalColor": "rgb(138, 100, 32)",
+      "footerFonts": [
+        {
+          "text": "Please wait for No. 03 to be called.",
+          "fontPx": 16
+        },
+        {
+          "text": "Enjoy your cheesecake.",
+          "fontPx": 16
+        },
+        {
+          "text": "Best enjoyed within 3 days, kept chilled.",
+          "fontPx": 16
+        },
+        {
+          "text": "Basque Bloc Cheesecakes · facebook.com/BasqueBlocPH",
+          "fontPx": 16
+        }
+      ],
+      "logo": {
+        "widthPx": 107.60440063476562,
+        "cssWidthPx": 120,
+        "blend": "multiply",
+        "bg": "rgba(0, 0, 0, 0)",
+        "naturalWidth": 720,
+        "naturalHeight": 442,
+        "corners": [
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          },
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          },
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          },
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          }
+        ],
+        "opaqueWhiteSamples": 0,
+        "sampled": 1640
+      }
+    }
+  },
+  {
+    "viewport": {
+      "id": "android_tab_land",
+      "width": 1280,
+      "height": 800,
+      "items": 8
+    },
+    "customer": {
+      "viewportW": 1280,
+      "viewportH": 800,
+      "slipWidthPx": 1088,
+      "slipHeightPx": 683.989501953125,
+      "heightRatio": 0.8549868774414062,
+      "widthRatio": 0.85,
+      "fitsWidth": true,
+      "clippedByStage": false,
+      "clippedByOverlay": false,
+      "canScroll": true,
+      "bodyScrollHeight": 956,
+      "bodyClientHeight": 728,
+      "cutText": [],
+      "zigzag": {
+        "at0": {
+          "scrollTop": 0,
+          "overflow": true,
+          "atBottom": false,
+          "hintShown": true,
+          "topFadeShown": false,
+          "hintOverlaps": [],
+          "stripHeightPx": 14.04,
+          "hits": [],
+          "lastText": "Cash₱20,000.00",
+          "lastLineGapPx": 10.53,
+          "lastLineGapCss": 12,
+          "scale": 0.8774,
+          "zoom": 1
+        },
+        "atMax": {
+          "scrollTop": 228,
+          "overflow": true,
+          "atBottom": true,
+          "hintShown": false,
+          "topFadeShown": true,
+          "hintOverlaps": [],
+          "stripHeightPx": 0,
+          "hits": [],
+          "lastText": "This is not an official receipt.",
+          "lastLineGapPx": 20.91,
+          "lastLineGapCss": 23.83,
+          "scale": 0.8774,
+          "zoom": 1
+        }
+      },
+      "itemFontPx": 20,
+      "amtFontPx": 20,
+      "totalFontPx": 40,
+      "totalColor": "rgb(138, 100, 32)",
+      "footerFonts": [
+        {
+          "text": "Please wait for No. 03 to be called.",
+          "fontPx": 16
+        },
+        {
+          "text": "Enjoy your cheesecake.",
+          "fontPx": 16
+        },
+        {
+          "text": "Best enjoyed within 3 days, kept chilled.",
+          "fontPx": 16
+        },
+        {
+          "text": "Basque Bloc Cheesecakes · facebook.com/BasqueBlocPH",
+          "fontPx": 16
+        }
+      ],
+      "logo": {
+        "widthPx": 105.290283203125,
+        "cssWidthPx": 120,
+        "blend": "multiply",
+        "bg": "rgba(0, 0, 0, 0)",
+        "naturalWidth": 720,
+        "naturalHeight": 442,
+        "corners": [
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          },
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          },
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          },
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          }
+        ],
+        "opaqueWhiteSamples": 0,
+        "sampled": 1640
+      }
+    }
+  },
+  {
+    "viewport": {
+      "id": "android_tab_port",
+      "width": 800,
+      "height": 1280,
+      "items": 8
+    },
+    "customer": {
+      "viewportW": 800,
+      "viewportH": 1280,
+      "slipWidthPx": 680,
+      "slipHeightPx": 1151.68994140625,
+      "heightRatio": 0.8997577667236328,
+      "widthRatio": 0.85,
+      "fitsWidth": true,
+      "clippedByStage": false,
+      "clippedByOverlay": false,
+      "canScroll": false,
+      "bodyScrollHeight": 990,
+      "bodyClientHeight": 990,
+      "cutText": [],
+      "zigzag": {
+        "at0": {
+          "scrollTop": 0,
+          "overflow": false,
+          "atBottom": true,
+          "hintShown": false,
+          "topFadeShown": false,
+          "hintOverlaps": [],
+          "stripHeightPx": 0,
+          "hits": [],
+          "lastText": "This is not an official receipt.",
+          "lastLineGapPx": 22.63,
+          "lastLineGapCss": 20,
+          "scale": 1.1315,
+          "zoom": 1
+        },
+        "atMax": {
+          "scrollTop": 0,
+          "overflow": false,
+          "atBottom": true,
+          "hintShown": false,
+          "topFadeShown": false,
+          "hintOverlaps": [],
+          "stripHeightPx": 0,
+          "hits": [],
+          "lastText": "This is not an official receipt.",
+          "lastLineGapPx": 22.63,
+          "lastLineGapCss": 20,
+          "scale": 1.1315,
+          "zoom": 1
+        }
+      },
+      "itemFontPx": 20,
+      "amtFontPx": 20,
+      "totalFontPx": 40,
+      "totalColor": "rgb(138, 100, 32)",
+      "footerFonts": [
+        {
+          "text": "Please wait for No. 03 to be called.",
+          "fontPx": 16
+        },
+        {
+          "text": "Enjoy your cheesecake.",
+          "fontPx": 16
+        },
+        {
+          "text": "Best enjoyed within 3 days, kept chilled.",
+          "fontPx": 16
+        },
+        {
+          "text": "Basque Bloc Cheesecakes · facebook.com/BasqueBlocPH",
+          "fontPx": 16
+        }
+      ],
+      "logo": {
+        "widthPx": 135.77371215820312,
+        "cssWidthPx": 120,
+        "blend": "multiply",
+        "bg": "rgba(0, 0, 0, 0)",
+        "naturalWidth": 720,
+        "naturalHeight": 442,
+        "corners": [
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          },
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          },
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          },
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          }
+        ],
+        "opaqueWhiteSamples": 0,
+        "sampled": 1640
+      }
+    }
+  },
+  {
+    "viewport": {
+      "id": "ipad13_land",
+      "width": 1366,
+      "height": 1024,
+      "items": 8
+    },
+    "customer": {
+      "viewportW": 1366,
+      "viewportH": 1024,
+      "slipWidthPx": 1161.10009765625,
+      "slipHeightPx": 907.736328125,
+      "heightRatio": 0.8864612579345703,
+      "widthRatio": 0.8500000714906661,
+      "fitsWidth": true,
+      "clippedByStage": false,
+      "clippedByOverlay": false,
+      "canScroll": false,
+      "bodyScrollHeight": 990,
+      "bodyClientHeight": 990,
+      "cutText": [],
+      "zigzag": {
+        "at0": {
+          "scrollTop": 0,
+          "overflow": false,
+          "atBottom": true,
+          "hintShown": false,
+          "topFadeShown": false,
+          "hintOverlaps": [],
+          "stripHeightPx": 0,
+          "hits": [],
+          "lastText": "This is not an official receipt.",
+          "lastLineGapPx": 17.84,
+          "lastLineGapCss": 20,
+          "scale": 0.8918,
+          "zoom": 1
+        },
+        "atMax": {
+          "scrollTop": 0,
+          "overflow": false,
+          "atBottom": true,
+          "hintShown": false,
+          "topFadeShown": false,
+          "hintOverlaps": [],
+          "stripHeightPx": 0,
+          "hits": [],
+          "lastText": "This is not an official receipt.",
+          "lastLineGapPx": 17.84,
+          "lastLineGapCss": 20,
+          "scale": 0.8918,
+          "zoom": 1
+        }
+      },
+      "itemFontPx": 20,
+      "amtFontPx": 20,
+      "totalFontPx": 40,
+      "totalColor": "rgb(138, 100, 32)",
+      "footerFonts": [
+        {
+          "text": "Please wait for No. 03 to be called.",
+          "fontPx": 16
+        },
+        {
+          "text": "Enjoy your cheesecake.",
+          "fontPx": 16
+        },
+        {
+          "text": "Best enjoyed within 3 days, kept chilled.",
+          "fontPx": 16
+        },
+        {
+          "text": "Basque Bloc Cheesecakes · facebook.com/BasqueBlocPH",
+          "fontPx": 16
+        }
+      ],
+      "logo": {
+        "widthPx": 107.0137939453125,
+        "cssWidthPx": 120,
+        "blend": "multiply",
+        "bg": "rgba(0, 0, 0, 0)",
+        "naturalWidth": 720,
+        "naturalHeight": 442,
+        "corners": [
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          },
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          },
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          },
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          }
+        ],
+        "opaqueWhiteSamples": 0,
+        "sampled": 1640
+      }
+    }
+  },
+  {
+    "viewport": {
+      "id": "ipad13_port",
+      "width": 1024,
+      "height": 1366,
+      "items": 8
+    },
+    "customer": {
+      "viewportW": 1024,
+      "viewportH": 1366,
+      "slipWidthPx": 870.4000244140625,
+      "slipHeightPx": 1228.81005859375,
+      "heightRatio": 0.8995681248856149,
+      "widthRatio": 0.8500000238418579,
+      "fitsWidth": true,
+      "clippedByStage": false,
+      "clippedByOverlay": false,
+      "canScroll": false,
+      "bodyScrollHeight": 990,
+      "bodyClientHeight": 990,
+      "cutText": [],
+      "zigzag": {
+        "at0": {
+          "scrollTop": 0,
+          "overflow": false,
+          "atBottom": true,
+          "hintShown": false,
+          "topFadeShown": false,
+          "hintOverlaps": [],
+          "stripHeightPx": 0,
+          "hits": [],
+          "lastText": "This is not an official receipt.",
+          "lastLineGapPx": 24.14,
+          "lastLineGapCss": 20,
+          "scale": 1.2072,
+          "zoom": 1
+        },
+        "atMax": {
+          "scrollTop": 0,
+          "overflow": false,
+          "atBottom": true,
+          "hintShown": false,
+          "topFadeShown": false,
+          "hintOverlaps": [],
+          "stripHeightPx": 0,
+          "hits": [],
+          "lastText": "This is not an official receipt.",
+          "lastLineGapPx": 24.14,
+          "lastLineGapCss": 20,
+          "scale": 1.2072,
+          "zoom": 1
+        }
+      },
+      "itemFontPx": 20,
+      "amtFontPx": 20,
+      "totalFontPx": 40,
+      "totalColor": "rgb(138, 100, 32)",
+      "footerFonts": [
+        {
+          "text": "Please wait for No. 03 to be called.",
+          "fontPx": 16
+        },
+        {
+          "text": "Enjoy your cheesecake.",
+          "fontPx": 16
+        },
+        {
+          "text": "Best enjoyed within 3 days, kept chilled.",
+          "fontPx": 16
+        },
+        {
+          "text": "Basque Bloc Cheesecakes · facebook.com/BasqueBlocPH",
+          "fontPx": 16
+        }
+      ],
+      "logo": {
+        "widthPx": 144.865478515625,
+        "cssWidthPx": 120,
+        "blend": "multiply",
+        "bg": "rgba(0, 0, 0, 0)",
+        "naturalWidth": 720,
+        "naturalHeight": 442,
+        "corners": [
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          },
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          },
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          },
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          }
+        ],
+        "opaqueWhiteSamples": 0,
+        "sampled": 1640
+      }
+    }
+  }
+]
