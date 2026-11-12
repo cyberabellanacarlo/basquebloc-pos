@@ -1,0 +1,67 @@
+{
+  "itemFontPx": 20,
+  "amtFontPx": 20,
+  "totalFontPx": 40,
+  "totalColor": "rgb(138, 100, 32)",
+  "officialWeight": "800",
+  "officialText": "This is not an official receipt.",
+  "newOrderHeightPx": 64,
+  "brand": "BASQUE BLOC",
+  "facebook": "",
+  "hasFacebookPH": true,
+  "footerFonts": [
+    {
+      "text": "Please wait for No. 01 to be called.",
+      "fontPx": 16
+    },
+    {
+      "text": "Enjoy your cheesecake.",
+      "fontPx": 16
+    },
+    {
+      "text": "Best enjoyed within 3 days, kept chilled.",
+      "fontPx": 16
+    },
+    {
+      "text": "Basque Bloc Cheesecakes · facebook.com/BasqueBlocPH",
+      "fontPx": 16
+    }
+  ],
+  "logo": {
+    "widthPx": 81.9827880859375,
+    "cssWidthPx": 120,
+    "blend": "multiply",
+    "bg": "rgba(0, 0, 0, 0)",
+    "naturalWidth": 720,
+    "naturalHeight": 442,
+    "corners": [
+      {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      }
+    ],
+    "opaqueWhiteSamples": 0,
+    "sampled": 1640
+  },
+  "customer": null
+}

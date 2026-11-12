@@ -1,0 +1,856 @@
+[
+  {
+    "viewport": {
+      "id": "phone_port",
+      "width": 390,
+      "height": 844
+    },
+    "customer": {
+      "viewportW": 390,
+      "viewportH": 844,
+      "slipWidthPx": 311.566162109375,
+      "slipHeightPx": 752.051025390625,
+      "heightRatio": 0.8910557172874704,
+      "widthRatio": 0.7988875951522436,
+      "fitsWidth": true,
+      "clippedByStage": false,
+      "clippedByOverlay": false,
+      "footerFonts": [
+        {
+          "text": "Please wait for No. 01 to be called.",
+          "fontPx": 16
+        },
+        {
+          "text": "Enjoy your cheesecake.",
+          "fontPx": 16
+        },
+        {
+          "text": "Best enjoyed within 3 days, kept chilled.",
+          "fontPx": 16
+        },
+        {
+          "text": "Basque Bloc Cheesecakes · facebook.com/BasqueBlocPH",
+          "fontPx": 16
+        }
+      ],
+      "logo": {
+        "widthPx": 97.87419128417969,
+        "cssWidthPx": 120,
+        "blend": "multiply",
+        "bg": "rgba(0, 0, 0, 0)",
+        "naturalWidth": 720,
+        "naturalHeight": 442,
+        "corners": [
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          },
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          },
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          },
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          }
+        ],
+        "opaqueWhiteSamples": 0,
+        "sampled": 1640
+      }
+    },
+    "logoStaff": {
+      "width": 88.24296569824219,
+      "css": 120
+    }
+  },
+  {
+    "viewport": {
+      "id": "phone_land",
+      "width": 844,
+      "height": 390
+    },
+    "customer": {
+      "viewportW": 844,
+      "viewportH": 390,
+      "slipWidthPx": 282.13818359375,
+      "slipHeightPx": 297.9631042480469,
+      "heightRatio": 0.7640079596103766,
+      "widthRatio": 0.3342869473859597,
+      "fitsWidth": true,
+      "clippedByStage": false,
+      "clippedByOverlay": false,
+      "footerFonts": [
+        {
+          "text": "Please wait for No. 01 to be called.",
+          "fontPx": 16
+        },
+        {
+          "text": "Enjoy your cheesecake.",
+          "fontPx": 16
+        },
+        {
+          "text": "Best enjoyed within 3 days, kept chilled.",
+          "fontPx": 16
+        },
+        {
+          "text": "Basque Bloc Cheesecakes · facebook.com/BasqueBlocPH",
+          "fontPx": 16
+        }
+      ],
+      "logo": {
+        "widthPx": 40.498291015625,
+        "cssWidthPx": 120,
+        "blend": "multiply",
+        "bg": "rgba(0, 0, 0, 0)",
+        "naturalWidth": 720,
+        "naturalHeight": 442,
+        "corners": [
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          },
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          },
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          },
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          }
+        ],
+        "opaqueWhiteSamples": 0,
+        "sampled": 1640
+      }
+    },
+    "logoStaff": {
+      "width": 28.96551513671875,
+      "css": 120
+    }
+  },
+  {
+    "viewport": {
+      "id": "android_tab_port",
+      "width": 800,
+      "height": 1280
+    },
+    "customer": {
+      "viewportW": 800,
+      "viewportH": 1280,
+      "slipWidthPx": 680,
+      "slipHeightPx": 1132.76513671875,
+      "heightRatio": 0.8849727630615234,
+      "widthRatio": 0.85,
+      "fitsWidth": true,
+      "clippedByStage": false,
+      "clippedByOverlay": false,
+      "footerFonts": [
+        {
+          "text": "Please wait for No. 01 to be called.",
+          "fontPx": 16
+        },
+        {
+          "text": "Enjoy your cheesecake.",
+          "fontPx": 16
+        },
+        {
+          "text": "Best enjoyed within 3 days, kept chilled.",
+          "fontPx": 16
+        },
+        {
+          "text": "Basque Bloc Cheesecakes · facebook.com/BasqueBlocPH",
+          "fontPx": 16
+        }
+      ],
+      "logo": {
+        "widthPx": 153.96224975585938,
+        "cssWidthPx": 120,
+        "blend": "multiply",
+        "bg": "rgba(0, 0, 0, 0)",
+        "naturalWidth": 720,
+        "naturalHeight": 442,
+        "corners": [
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          },
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          },
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          },
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          }
+        ],
+        "opaqueWhiteSamples": 0,
+        "sampled": 1640
+      }
+    },
+    "logoStaff": {
+      "width": 120,
+      "css": 120
+    }
+  },
+  {
+    "viewport": {
+      "id": "android_tab_land",
+      "width": 1280,
+      "height": 800
+    },
+    "customer": {
+      "viewportW": 1280,
+      "viewportH": 800,
+      "slipWidthPx": 1019.90478515625,
+      "slipHeightPx": 707.912353515625,
+      "heightRatio": 0.8848904418945313,
+      "widthRatio": 0.7968006134033203,
+      "fitsWidth": true,
+      "clippedByStage": false,
+      "clippedByOverlay": false,
+      "footerFonts": [
+        {
+          "text": "Please wait for No. 01 to be called.",
+          "fontPx": 16
+        },
+        {
+          "text": "Enjoy your cheesecake.",
+          "fontPx": 16
+        },
+        {
+          "text": "Best enjoyed within 3 days, kept chilled.",
+          "fontPx": 16
+        },
+        {
+          "text": "Basque Bloc Cheesecakes · facebook.com/BasqueBlocPH",
+          "fontPx": 16
+        }
+      ],
+      "logo": {
+        "widthPx": 96.21746826171875,
+        "cssWidthPx": 120,
+        "blend": "multiply",
+        "bg": "rgba(0, 0, 0, 0)",
+        "naturalWidth": 720,
+        "naturalHeight": 442,
+        "corners": [
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          },
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          },
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          },
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          }
+        ],
+        "opaqueWhiteSamples": 0,
+        "sampled": 1640
+      }
+    },
+    "logoStaff": {
+      "width": 81.9827880859375,
+      "css": 120
+    }
+  },
+  {
+    "viewport": {
+      "id": "ipad13_port",
+      "width": 1024,
+      "height": 1366
+    },
+    "customer": {
+      "viewportW": 1024,
+      "viewportH": 1366,
+      "slipWidthPx": 870.39990234375,
+      "slipHeightPx": 1227.58447265625,
+      "heightRatio": 0.8986709170250732,
+      "widthRatio": 0.8499999046325684,
+      "fitsWidth": true,
+      "clippedByStage": false,
+      "clippedByOverlay": false,
+      "footerFonts": [
+        {
+          "text": "Please wait for No. 01 to be called.",
+          "fontPx": 16
+        },
+        {
+          "text": "Enjoy your cheesecake.",
+          "fontPx": 16
+        },
+        {
+          "text": "Best enjoyed within 3 days, kept chilled.",
+          "fontPx": 16
+        },
+        {
+          "text": "Basque Bloc Cheesecakes · facebook.com/BasqueBlocPH",
+          "fontPx": 16
+        }
+      ],
+      "logo": {
+        "widthPx": 166.84982299804688,
+        "cssWidthPx": 120,
+        "blend": "multiply",
+        "bg": "rgba(0, 0, 0, 0)",
+        "naturalWidth": 720,
+        "naturalHeight": 442,
+        "corners": [
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          },
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          },
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          },
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          }
+        ],
+        "opaqueWhiteSamples": 0,
+        "sampled": 1640
+      }
+    },
+    "logoStaff": {
+      "width": 120,
+      "css": 120
+    }
+  },
+  {
+    "viewport": {
+      "id": "ipad13_land",
+      "width": 1366,
+      "height": 1024
+    },
+    "customer": {
+      "viewportW": 1366,
+      "viewportH": 1024,
+      "slipWidthPx": 1161.10009765625,
+      "slipHeightPx": 920.21923828125,
+      "heightRatio": 0.8986515998840332,
+      "widthRatio": 0.8500000714906661,
+      "fitsWidth": true,
+      "clippedByStage": false,
+      "clippedByOverlay": false,
+      "footerFonts": [
+        {
+          "text": "Please wait for No. 01 to be called.",
+          "fontPx": 16
+        },
+        {
+          "text": "Enjoy your cheesecake.",
+          "fontPx": 16
+        },
+        {
+          "text": "Best enjoyed within 3 days, kept chilled.",
+          "fontPx": 16
+        },
+        {
+          "text": "Basque Bloc Cheesecakes · facebook.com/BasqueBlocPH",
+          "fontPx": 16
+        }
+      ],
+      "logo": {
+        "widthPx": 125.0736083984375,
+        "cssWidthPx": 120,
+        "blend": "multiply",
+        "bg": "rgba(0, 0, 0, 0)",
+        "naturalWidth": 720,
+        "naturalHeight": 442,
+        "corners": [
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          },
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          },
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          },
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          }
+        ],
+        "opaqueWhiteSamples": 0,
+        "sampled": 1640
+      }
+    },
+    "logoStaff": {
+      "width": 110.9482421875,
+      "css": 120
+    }
+  },
+  {
+    "viewport": {
+      "id": "ipad13_port_1032",
+      "width": 1032,
+      "height": 1376
+    },
+    "customer": {
+      "viewportW": 1032,
+      "viewportH": 1376,
+      "slipWidthPx": 877.199951171875,
+      "slipHeightPx": 1237.17529296875,
+      "heightRatio": 0.8991099512854288,
+      "widthRatio": 0.8499999526859254,
+      "fitsWidth": true,
+      "clippedByStage": false,
+      "clippedByOverlay": false,
+      "footerFonts": [
+        {
+          "text": "Please wait for No. 01 to be called.",
+          "fontPx": 16
+        },
+        {
+          "text": "Enjoy your cheesecake.",
+          "fontPx": 16
+        },
+        {
+          "text": "Best enjoyed within 3 days, kept chilled.",
+          "fontPx": 16
+        },
+        {
+          "text": "Basque Bloc Cheesecakes · facebook.com/BasqueBlocPH",
+          "fontPx": 16
+        }
+      ],
+      "logo": {
+        "widthPx": 168.1533203125,
+        "cssWidthPx": 120,
+        "blend": "multiply",
+        "bg": "rgba(0, 0, 0, 0)",
+        "naturalWidth": 720,
+        "naturalHeight": 442,
+        "corners": [
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          },
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          },
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          },
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          }
+        ],
+        "opaqueWhiteSamples": 0,
+        "sampled": 1640
+      }
+    }
+  },
+  {
+    "viewport": {
+      "id": "ipad13_port_text150",
+      "width": 1024,
+      "height": 1366,
+      "zoom": 1.5
+    },
+    "customer": {
+      "viewportW": 1024,
+      "viewportH": 1366,
+      "slipWidthPx": 940.178466796875,
+      "slipHeightPx": 1227.94873046875,
+      "heightRatio": 0.8989375772099195,
+      "widthRatio": 0.9181430339813232,
+      "fitsWidth": true,
+      "clippedByStage": false,
+      "clippedByOverlay": false,
+      "footerFonts": [
+        {
+          "text": "Please wait for No. 01 to be called.",
+          "fontPx": 16
+        },
+        {
+          "text": "Enjoy your cheesecake.",
+          "fontPx": 16
+        },
+        {
+          "text": "Best enjoyed within 3 days, kept chilled.",
+          "fontPx": 16
+        },
+        {
+          "text": "Basque Bloc Cheesecakes · facebook.com/BasqueBlocPH",
+          "fontPx": 16
+        }
+      ],
+      "logo": {
+        "widthPx": 167.142822265625,
+        "cssWidthPx": 120,
+        "blend": "multiply",
+        "bg": "rgba(0, 0, 0, 0)",
+        "naturalWidth": 720,
+        "naturalHeight": 442,
+        "corners": [
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          },
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          },
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          },
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          }
+        ],
+        "opaqueWhiteSamples": 0,
+        "sampled": 1640
+      }
+    },
+    "staffFooter": [
+      {
+        "text": "Please wait for No. 01 to be called.",
+        "fontPx": 16
+      },
+      {
+        "text": "Enjoy your cheesecake.",
+        "fontPx": 16
+      },
+      {
+        "text": "Best enjoyed within 3 days, kept chilled.",
+        "fontPx": 16
+      },
+      {
+        "text": "Basque Bloc Cheesecakes · facebook.com/BasqueBlocPH",
+        "fontPx": 16
+      }
+    ],
+    "logo": {
+      "widthPx": 180,
+      "cssWidthPx": 120,
+      "blend": "multiply",
+      "bg": "rgba(0, 0, 0, 0)",
+      "naturalWidth": 720,
+      "naturalHeight": 442,
+      "corners": [
+        {
+          "r": 0,
+          "g": 0,
+          "b": 0,
+          "a": 0
+        },
+        {
+          "r": 0,
+          "g": 0,
+          "b": 0,
+          "a": 0
+        },
+        {
+          "r": 0,
+          "g": 0,
+          "b": 0,
+          "a": 0
+        },
+        {
+          "r": 0,
+          "g": 0,
+          "b": 0,
+          "a": 0
+        }
+      ],
+      "opaqueWhiteSamples": 0,
+      "sampled": 1640
+    }
+  },
+  {
+    "viewport": {
+      "id": "ipad13_port_text200",
+      "width": 1024,
+      "height": 1366,
+      "zoom": 2
+    },
+    "customer": {
+      "viewportW": 1024,
+      "viewportH": 1366,
+      "slipWidthPx": 658.262939453125,
+      "slipHeightPx": 1182.448974609375,
+      "heightRatio": 0.8656288247506405,
+      "widthRatio": 0.6428349018096924,
+      "fitsWidth": true,
+      "clippedByStage": false,
+      "clippedByOverlay": false,
+      "footerFonts": [
+        {
+          "text": "Please wait for No. 01 to be called.",
+          "fontPx": 16
+        },
+        {
+          "text": "Enjoy your cheesecake.",
+          "fontPx": 16
+        },
+        {
+          "text": "Best enjoyed within 3 days, kept chilled.",
+          "fontPx": 16
+        },
+        {
+          "text": "Basque Bloc Cheesecakes · facebook.com/BasqueBlocPH",
+          "fontPx": 16
+        }
+      ],
+      "logo": {
+        "widthPx": 156.72927856445312,
+        "cssWidthPx": 120,
+        "blend": "multiply",
+        "bg": "rgba(0, 0, 0, 0)",
+        "naturalWidth": 720,
+        "naturalHeight": 442,
+        "corners": [
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          },
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          },
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          },
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          }
+        ],
+        "opaqueWhiteSamples": 0,
+        "sampled": 1640
+      }
+    },
+    "staffFooter": [
+      {
+        "text": "Please wait for No. 01 to be called.",
+        "fontPx": 16
+      },
+      {
+        "text": "Enjoy your cheesecake.",
+        "fontPx": 16
+      },
+      {
+        "text": "Best enjoyed within 3 days, kept chilled.",
+        "fontPx": 16
+      },
+      {
+        "text": "Basque Bloc Cheesecakes · facebook.com/BasqueBlocPH",
+        "fontPx": 16
+      }
+    ],
+    "logo": {
+      "widthPx": 240,
+      "cssWidthPx": 120,
+      "blend": "multiply",
+      "bg": "rgba(0, 0, 0, 0)",
+      "naturalWidth": 720,
+      "naturalHeight": 442,
+      "corners": [
+        {
+          "r": 0,
+          "g": 0,
+          "b": 0,
+          "a": 0
+        },
+        {
+          "r": 0,
+          "g": 0,
+          "b": 0,
+          "a": 0
+        },
+        {
+          "r": 0,
+          "g": 0,
+          "b": 0,
+          "a": 0
+        },
+        {
+          "r": 0,
+          "g": 0,
+          "b": 0,
+          "a": 0
+        }
+      ],
+      "opaqueWhiteSamples": 0,
+      "sampled": 1640
+    }
+  },
+  {
+    "viewport": {
+      "id": "ipad13_port_long",
+      "width": 1024,
+      "height": 1366
+    },
+    "customer": {
+      "viewportW": 1024,
+      "viewportH": 1366,
+      "slipWidthPx": 870.4000244140625,
+      "slipHeightPx": 1228.81005859375,
+      "heightRatio": 0.8995681248856149,
+      "widthRatio": 0.8500000238418579,
+      "fitsWidth": true,
+      "clippedByStage": false,
+      "clippedByOverlay": false,
+      "footerFonts": [
+        {
+          "text": "Please wait for No. 02 to be called.",
+          "fontPx": 16
+        },
+        {
+          "text": "Enjoy your cheesecake.",
+          "fontPx": 16
+        },
+        {
+          "text": "Best enjoyed within 3 days, kept chilled.",
+          "fontPx": 16
+        },
+        {
+          "text": "Basque Bloc Cheesecakes · facebook.com/BasqueBlocPH",
+          "fontPx": 16
+        }
+      ],
+      "logo": {
+        "widthPx": 144.865478515625,
+        "cssWidthPx": 120,
+        "blend": "multiply",
+        "bg": "rgba(0, 0, 0, 0)",
+        "naturalWidth": 720,
+        "naturalHeight": 442,
+        "corners": [
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          },
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          },
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          },
+          {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          }
+        ],
+        "opaqueWhiteSamples": 0,
+        "sampled": 1640
+      }
+    }
+  }
+]

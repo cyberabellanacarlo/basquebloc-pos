@@ -81,34 +81,96 @@
     if (name === "receipt") setTimeout(fitSlip, 30);
   }
 
+  function applyCenteredScale(shell, w, h, scale) {
+    shell.style.transformOrigin = "center center";
+    shell.style.transform = "scale(" + scale + ")";
+    /* Match the layout box to the visual size so overflow:hidden cannot clip. */
+    var extraW = w * (scale - 1);
+    var extraH = h * (scale - 1);
+    shell.style.marginLeft = (extraW / 2) + "px";
+    shell.style.marginRight = (extraW / 2) + "px";
+    shell.style.marginTop = (extraH / 2) + "px";
+    shell.style.marginBottom = (extraH / 2) + "px";
+  }
+
   function fitSlipIn(chrome, opts) {
     opts = opts || {};
     if (!chrome) return;
     var shell = chrome.querySelector(".slip-shell");
     if (!shell) return;
     shell.style.transform = "none";
-    shell.style.marginBottom = "0";
-    shell.style.marginTop = "0";
+    shell.style.margin = "0";
+    if (!opts.keepWidth) shell.style.width = "";
     var pad = opts.pad != null ? opts.pad : 16;
     var availW = chrome.clientWidth - pad;
     var availH = chrome.clientHeight - pad;
-    if (availW <= 40 || availH <= 40) return;
+    if (availW <= 8 || availH <= 8) return;
     var w = shell.offsetWidth;
     var h = shell.offsetHeight;
     if (!w || !h) return;
-    /* Never clip: scale down as far as needed so the full slip stays in view. */
     var scale = Math.min(1, availW / w, availH / h);
-    var origin = opts.origin || "top center";
-    shell.style.transformOrigin = origin;
+    if (!(scale > 0)) return;
+    /* Staff view: shrink from the top. Do not treat "top center" as a centered scale. */
+    shell.style.transformOrigin = "top center";
     shell.style.transform = "scale(" + scale + ")";
-    if (origin.indexOf("top") !== -1) {
-      shell.style.marginBottom = Math.round(h * (scale - 1)) + "px";
+    shell.style.marginBottom = (h * (scale - 1)) + "px";
+    chrome.scrollTop = 0;
+    chrome.scrollLeft = 0;
+  }
+
+  /* Show customer: aim for ~85% of the viewport width, cap at ~90% of the height, never clip.
+     If the designed 520px slip is too tall/narrow to hit that width, widen it first so type can still scale uniformly. */
+  function fitCustomerSlip() {
+    var chrome = $("customer-stage");
+    if (!chrome) return;
+    var shell = chrome.querySelector(".slip-shell");
+    if (!shell) return;
+    shell.style.transform = "none";
+    shell.style.margin = "0";
+    shell.style.width = "";
+    var pad = 8;
+    var availW = chrome.clientWidth - pad;
+    var availH = chrome.clientHeight - pad;
+    if (availW <= 8 || availH <= 8) return;
+    var targetW = Math.min(window.innerWidth * 0.85, availW);
+    var targetH = Math.min(window.innerHeight * 0.90, availH);
+    if (targetW <= 8 || targetH <= 8) return;
+
+    var designW = Math.min(520, targetW);
+    shell.style.width = designW + "px";
+    var w = shell.offsetWidth;
+    var h = shell.offsetHeight;
+    if (!w || !h) return;
+
+    var need = targetW / targetH;
+    /* May widen up to the stage, not just the 85% target, so a later height cap can still land near 85% width. */
+    if (w / h < need && w < availW) {
+      var lo = w, hi = availW, i;
+      for (i = 0; i < 10; i++) {
+        var mid = (lo + hi) / 2;
+        shell.style.width = mid + "px";
+        w = shell.offsetWidth;
+        h = shell.offsetHeight;
+        if (!w || !h) break;
+        if (w / h < need) lo = mid;
+        else hi = mid;
+      }
+      shell.style.width = Math.ceil(hi) + "px";
+      w = shell.offsetWidth;
+      h = shell.offsetHeight;
+      if (!w || !h) return;
     }
+
+    var scale = Math.min(targetW / w, targetH / h, availW / w, availH / h);
+    if (!(scale > 0)) return;
+    applyCenteredScale(shell, w, h, scale);
+    chrome.scrollTop = 0;
+    chrome.scrollLeft = 0;
   }
 
   function fitSlip() {
     if (state.customerOpen) {
-      fitSlipIn($("customer-stage"), { origin: "center center", pad: 8 });
+      fitCustomerSlip();
       return;
     }
     if (state.view !== "receipt") return;
@@ -136,7 +198,7 @@
     receipt.render(state.currentSale, state.settings, $("customer-mount"));
     $("customer-overlay").classList.remove("hidden");
     setTimeout(function () {
-      fitSlipIn($("customer-stage"), { origin: "center center", pad: 8 });
+      fitCustomerSlip();
     }, 30);
     tryFullscreen($("customer-overlay"));
   }
@@ -1047,9 +1109,78 @@
       var total = document.getElementById("receipt-total");
       var official = root.querySelector(".slip-official");
       var btn = document.getElementById("btn-new-order");
+      var logo = root.querySelector(".slip-logo");
       function px(el, prop) {
         if (!el) return 0;
         return parseFloat(getComputedStyle(el)[prop] || "0");
+      }
+      function noteFonts(scope) {
+        return Array.prototype.map.call(scope.querySelectorAll(".slip-note, .slip-care"), function (n) {
+          return { text: (n.textContent || "").trim(), fontPx: px(n, "fontSize") };
+        });
+      }
+      function logoInfo(img) {
+        if (!img) return { widthPx: 0, cssWidthPx: 0, blend: "", bg: "", corners: [] };
+        var info = {
+          widthPx: img.getBoundingClientRect().width,
+          cssWidthPx: px(img, "width"),
+          blend: getComputedStyle(img).mixBlendMode,
+          bg: getComputedStyle(img).backgroundColor,
+          naturalWidth: img.naturalWidth,
+          naturalHeight: img.naturalHeight,
+          corners: []
+        };
+        try {
+          var c = document.createElement("canvas");
+          c.width = img.naturalWidth;
+          c.height = img.naturalHeight;
+          var ctx = c.getContext("2d");
+          ctx.drawImage(img, 0, 0);
+          var pts = [[0, 0], [c.width - 1, 0], [0, c.height - 1], [c.width - 1, c.height - 1]];
+          info.corners = pts.map(function (pt) {
+            var d = ctx.getImageData(pt[0], pt[1], 1, 1).data;
+            return { r: d[0], g: d[1], b: d[2], a: d[3] };
+          });
+          var opaqueWhite = 0, sampled = 0;
+          var stepX = Math.max(1, Math.floor(c.width / 40));
+          var stepY = Math.max(1, Math.floor(c.height / 40));
+          for (var y = 0; y < c.height; y += stepY) {
+            for (var x = 0; x < c.width; x += stepX) {
+              var p = ctx.getImageData(x, y, 1, 1).data;
+              sampled += 1;
+              if (p[3] > 200 && p[0] > 240 && p[1] > 240 && p[2] > 240) opaqueWhite += 1;
+            }
+          }
+          info.opaqueWhiteSamples = opaqueWhite;
+          info.sampled = sampled;
+        } catch (e) {
+          info.canvasError = String(e);
+        }
+        return info;
+      }
+      var customerRoot = document.getElementById("customer-mount");
+      var customerShell = customerRoot ? customerRoot.querySelector(".slip-shell") : null;
+      var stage = document.getElementById("customer-stage");
+      var overlay = document.getElementById("customer-overlay");
+      var customer = null;
+      if (customerShell && stage && overlay && !overlay.classList.contains("hidden")) {
+        var slipR = customerShell.getBoundingClientRect();
+        var stageR = stage.getBoundingClientRect();
+        var overR = overlay.getBoundingClientRect();
+        var eps = 2;
+        customer = {
+          viewportW: window.innerWidth,
+          viewportH: window.innerHeight,
+          slipWidthPx: slipR.width,
+          slipHeightPx: slipR.height,
+          heightRatio: window.innerHeight ? (slipR.height / window.innerHeight) : 0,
+          widthRatio: window.innerWidth ? (slipR.width / window.innerWidth) : 0,
+          fitsWidth: slipR.width <= window.innerWidth + eps,
+          clippedByStage: !(slipR.top >= stageR.top - eps && slipR.bottom <= stageR.bottom + eps && slipR.left >= stageR.left - eps && slipR.right <= stageR.right + eps),
+          clippedByOverlay: !(slipR.top >= overR.top - eps && slipR.bottom <= overR.bottom + eps && slipR.left >= overR.left - eps && slipR.right <= overR.right + eps),
+          footerFonts: noteFonts(customerRoot),
+          logo: logoInfo(customerRoot.querySelector(".slip-logo"))
+        };
       }
       return {
         itemFontPx: px(item, "fontSize"),
@@ -1063,7 +1194,10 @@
         facebook: (root.querySelector(".slip-care:last-of-type") && official)
           ? Array.prototype.map.call(root.querySelectorAll(".slip-care"), function (n) { return n.textContent; }).join(" | ")
           : "",
-        hasFacebookPH: !!(root.textContent && root.textContent.indexOf("facebook.com/BasqueBlocPH") !== -1)
+        hasFacebookPH: !!(root.textContent && root.textContent.indexOf("facebook.com/BasqueBlocPH") !== -1),
+        footerFonts: noteFonts(root),
+        logo: logoInfo(logo),
+        customer: customer
       };
     }
   };

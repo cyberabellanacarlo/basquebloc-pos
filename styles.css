@@ -321,7 +321,7 @@ body.receipt-open #topbar { display: none; }
   text-align: center;
   position: relative;
 }
-.slip-logo { width: 84px; height: auto; margin: 0 auto 6px; display: block; filter: grayscale(1) contrast(1.2); }
+.slip-logo { width: 120px; height: auto; margin: 0 auto 6px; display: block; background: transparent; mix-blend-mode: multiply; }
 .slip-brand { font-weight: 800; font-size: 22px; letter-spacing: 0.12em; }
 .slip-tagline { font-style: italic; font-size: 15px; margin-top: 4px; }
 .slip-city { font-size: 15px; letter-spacing: 0.16em; margin: 2px 0 12px; }
@@ -337,7 +337,7 @@ body.receipt-open #topbar { display: none; }
 }
 .slip-change { font-weight: 800; font-size: 20px; }
 .slip-thanks { font-weight: 800; font-size: 22px; letter-spacing: 0.14em; margin: 16px 0 8px; }
-.slip-note, .slip-care { font-size: 15px; line-height: 1.4; }
+.slip-note, .slip-care { font-size: 16px; line-height: 1.4; }
 .slip-care { margin-top: 12px; }
 .slip-official { margin-top: 8px; color: #1a1a1a; font-weight: 800; font-size: 15px; }
 
